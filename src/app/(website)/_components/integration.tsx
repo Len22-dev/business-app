@@ -71,7 +71,7 @@ export default function Integration() {
           >
             <div className="relative aspect-square rounded-2xl overflow-hidden">
               <Image
-                src="/bizzImage.jpeg"
+                src="/Image3.png"
                 alt="Integration Preview"
                 fill
                 className="object-cover"

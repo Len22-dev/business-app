@@ -34,3 +34,41 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Business Logic: Sales, Purchases, Inventory, and Accounting
+
+### Sales Workflow
+- When a sale is created (status 'completed'):
+  - For each sale item:
+    - A stock movement record is created (type: 'out', status: 'Confirmed').
+    - Inventory is decremented for the product at the relevant location.
+  - A transaction record is created (type: 'income').
+  - A journal entry and corresponding ledger entries are created:
+    - **Debit:** Cash (1000) or Accounts Receivable (1100)
+    - **Credit:** Sales Revenue (4000)
+    - **Debit:** Cost of Goods Sold (5000), **Credit:** Inventory (1200) for COGS
+
+### Purchase Workflow
+- When a purchase is created (status 'completed'):
+  - For each purchase item:
+    - A stock movement record is created (type: 'in', status: 'Confirmed').
+    - Inventory is incremented for the product at the relevant location.
+  - A transaction record is created (type: 'expense').
+  - A journal entry and corresponding ledger entries are created:
+    - **Debit:** Inventory (1200) or Expense (6000)
+    - **Credit:** Cash (1000) or Accounts Payable (2000)
+
+### Account Codes/Names
+- 1000: Cash
+- 1100: Accounts Receivable
+- 1200: Inventory
+- 2000: Accounts Payable
+- 4000: Sales Revenue
+- 5000: Cost of Goods Sold
+- 6000: Purchases/Expense
+
+### Atomicity
+- All updates (stock, inventory, transactions, ledgers) are performed in a single database transaction for consistency.
+
+### Extensibility
+- This logic supports future pages for accounts receivable/payable and profit/loss reporting.

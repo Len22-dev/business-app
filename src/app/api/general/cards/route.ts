@@ -1,0 +1,28 @@
+import { inventoryQueries } from "@/lib/drizzle/queries/general-queries"
+import { NextRequest, NextResponse } from "next/server"
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+   // const userId = searchParams.get('userId')
+    const businessId = searchParams.get('businessId')
+    const bankId = searchParams.get('bankId')
+
+    if ( !businessId || !bankId) {
+      return NextResponse.json(
+        { error: 'userId, businessId, and bankId are required' },
+        { status: 400 }
+      )
+    }
+
+    const data = await inventoryQueries.getCards({ bankId, businessId })
+    return NextResponse.json(data)
+    
+  } catch (error: any) {
+    console.error('API error:', error)
+    return NextResponse.json(
+      { error: error.message || 'Failed to fetch cards' },
+      { status: 500 }
+    )
+  }
+}

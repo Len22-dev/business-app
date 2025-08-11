@@ -8,22 +8,22 @@ export default function FeatureGrid() {
     {
       title: "Task Management",
       description: "Simple and intuitive project task tracking",
-      image: "/placeholder.svg?height=200&width=300",
+      image: "/Image3.png",
     },
     {
       title: "Customizable Workflows",
       description: "Adapt processes to match your team's needs",
-      image: "/placeholder.svg?height=200&width=300",
+      image: "/Image2.png",
     },
     {
       title: "Time Tracking",
       description: "Monitor progress and optimize productivity",
-      image: "/placeholder.svg?height=200&width=300",
+      image: "/Image1.png",
     },
     {
       title: "All-in-one place",
       description: "Manage projects from multiple projects in one platform",
-      image: "/placeholder.svg?height=200&width=300",
+      image: "/Image3.png",
     },
   ]
 
@@ -36,8 +36,8 @@ export default function FeatureGrid() {
           transition={{ duration: 0.5 }}
           className="text-center mb-16"
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Everything You Need to Keep Projects on Track
+          <h2 className="text-3xl text-balance md:text-4xl font-bold text-emerald-900 mb-4">
+            Everything You Need To Keep You Business On The Right Track
           </h2>
         </Motion.div>
 

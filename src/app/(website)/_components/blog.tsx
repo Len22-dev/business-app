@@ -7,15 +7,15 @@ export default function Blog() {
     {
       title: "Sales Tips, Insights, and Trends",
       date: "12 Aug 2024",
-      image: "/placeholder.svg?height=200&width=300",
+      image: "/Image2.png",
       description: "Stay updated with the latest sales strategies and market insights.",
       slug: "sales-tips-insights-trends-1",
     },
     {
       title: "Sales Tips, Insights, and Trends",
       date: "15 Sep 2024",
-      image: "/placeholder.svg?height=200&width=300",
-      description: "Stay updated with the latest sales strategies and market insights.",
+      image: "/Image3.png",
+      description: "Stay updated with the latest business strategies and market insights.",
       slug: "sales-tips-insights-trends-2",
     },
   ]

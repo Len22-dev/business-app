@@ -17,7 +17,7 @@ export default function Features() {
               className="relative aspect-[4/3] rounded-2xl overflow-hidden"
             >
               <Image
-                src="/bizzImage.jpeg"
+                src="/Image1.png"
                 alt="Features Preview"
                 fill
                 className="object-cover"

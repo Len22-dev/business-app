@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Footer from "./(website)/_components/footer";
-import Navbar from "./(website)/_components/Navbar";
+import { Inter } from "next/font/google";
+//import { cn } from "@/lib/utils";
+import { ReactQueryClientProvider } from "@/components/reactQuery-ClientProvider";
+import { ThemeProvider } from "@/components/Theme-Provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,9 +16,15 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+});
+
+
 export const metadata: Metadata = {
-  title: "Manage Your Business With Busieness.com ",
-  description: `Manage and tranform your business operations with ${<span className="text-2xl font-semibold">Business.com</span>}`,
+  title: "Manage Your Business With GrowEazie.com ",
+  description: `All in one ERP to grow your business with ${<span className="text-2xl font-semibold">GrowEazie.com</span>}`,
 };
 
 export default function RootLayout({
@@ -25,14 +33,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <ReactQueryClientProvider>
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${inter} antialiased`}
       >
-       <div className="mb-24"><Navbar/></div>
+       <ThemeProvider
+        attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+       >
         {children}
-        <div className="mt-24"><Footer/></div>
+       </ThemeProvider>
+        
       </body>
     </html>
+    </ReactQueryClientProvider>
   );
 }

@@ -1,3 +1,4 @@
+import { Logo } from "@/app/shared/logo"
 import Link from "next/link"
 
 export default function Footer() {
@@ -30,8 +31,8 @@ export default function Footer() {
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           <div>
-            <Link href="/" className="text-white font-bold text-xl mb-4 block">
-              SalesFiv
+            <Link href="/" className="flex text-white text-2xl font-bold">
+              <Logo/>
             </Link>
             <p className="text-gray-400 text-sm">
               Transform the way you manage projects and boost your team's productivity with our innovative solutions.

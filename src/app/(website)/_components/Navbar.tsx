@@ -3,21 +3,17 @@
 import Link from "next/link"
 import { useState } from "react"
 import { Menu, X } from "lucide-react"
-import { Logo } from "@/app/components/logo"
+import { Logo } from "@/app/shared/logo"
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <nav className="fixed top-0 w-full z-50 bg-[#002b3d]/95 backdrop-blur-sm">
+    <nav className="fixed top-0 w-full z-50 bg-[#002b3d]/95 backdrop-blur-sm px-12">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-            <Link href="/" className="text-white font-bold text-xl">
-          <div className="flex items-center text-emerald-500 border-2 border-emerald-500 rounded-full px-2 py-1">
-            {/* Logo */}
+            <Link href="/" >
             <Logo/>
-           <span className="text-white">Grow</span><span className="text-emerald-500">Eazie</span>
-          </div>
             </Link>
 
           {/* Desktop Navigation */}
@@ -34,11 +30,11 @@ export default function Navbar() {
             <Link href="/about" className="text-white hover:text-emerald-400 transition-colors">
               About Us
             </Link>
-            <Link href="/sign-in" className="text-white hover:text-emerald-400 transition-colors">
+            <Link href="/auth/login" className="text-white hover:text-emerald-400 transition-colors">
               Log in
             </Link>
             <Link
-              href="/sign-up"
+              href="/auth/sign-up"
               className="bg-emerald-500 text-white px-4 py-2 rounded-md hover:bg-emerald-600 transition-colors"
             >
               Sign up
@@ -69,11 +65,11 @@ export default function Navbar() {
               <Link href="/about" className="text-white block px-3 py-2 rounded-md hover:bg-emerald-500/10">
                 About Us
               </Link>
-              <Link href="/login" className="text-white block px-3 py-2 rounded-md hover:bg-emerald-500/10">
+              <Link href="/auth/login" className="text-white block px-3 py-2 rounded-md hover:bg-emerald-500/10">
                 Log in
               </Link>
               <Link
-                href="/signup"
+                href="/auth/signup"
                 className="bg-emerald-500 text-white block px-3 py-2 rounded-md hover:bg-emerald-600"
               >
                 Sign up

@@ -81,3 +81,25 @@ export const createCostCenterSchema = costCenterSchema.omit({
 });
 
 export const updateCostCenterSchema = createCostCenterSchema.partial();
+
+export const purchaseFormSchema = z.object({
+  businessId: z.string().uuid({ message: "Invalid UUID format" }),
+  locationId: z.string().uuid({ message: "Invalid UUID format" }).optional(),
+  createdBy: z.string().uuid({ message: "Invalid UUID format" }).optional(),
+  vendorName: z.string().min(1, { message: "Customer name is required" }),
+  description: z.string().min(1, { message: "Description is required" }).optional(),
+  purchaseStatus: z.enum(['pending', 'part_payment', 'paid', 'failed', 'refunded']).default('pending'),
+  paymentMethod: z.enum(['cash', 'bank_transfer', 'card', 'mobile_money', 'cheque']).default('cash'),
+  bankId: z.string().uuid({ message: "Invalid UUID format" }).optional(),
+  cardId: z.string().uuid({ message: "Invalid UUID format" }).optional(),
+  totalAmount: z.number().int().min(0).default(0),
+  paidAmount: z.number().int().min(0).default(0),
+  balanceDue: z.number().int().min(0).default(0),
+  purchaseDate: z.date().optional(),
+  expectedDate: z.date().optional(),
+  purchaseNumber: z.number().optional(),
+  subtotal: z.number().int().min(0).default(0),
+  taxAmount: z.number().int().min(0).default(0),
+  discount: z.number().int().min(0).default(0),
+  paymentTerms: z.string().max(50, { message: "Payment terms too long" }).optional(),
+});

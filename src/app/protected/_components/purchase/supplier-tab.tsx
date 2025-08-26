@@ -76,7 +76,8 @@ const mockSuppliers = [
   },
 ]
 
-export function SuppliersTab() {
+export function SuppliersTab({businessId}: {businessId: string}) {
+
   const [showAddModal, setShowAddModal] = useState(false)
   const [showViewModal, setShowViewModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -209,7 +210,8 @@ export function SuppliersTab() {
         </CardContent>
       </Card>
 
-      <AddSupplierModal open={showAddModal} onOpenChange={setShowAddModal} />
+      <AddSupplierModal open={showAddModal} onOpenChange={setShowAddModal} businessId={businessId} />
+
       <ViewSupplierModal open={showViewModal} onOpenChange={setShowViewModal} supplier={selectedSupplier} />
       <EditSupplierModal open={showEditModal} onOpenChange={setShowEditModal} supplier={selectedSupplier} />
     </div>

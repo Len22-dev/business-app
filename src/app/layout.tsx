@@ -32,6 +32,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  
   return (
     <ReactQueryClientProvider>
     <html lang="en" suppressHydrationWarning>

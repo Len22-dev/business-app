@@ -32,6 +32,19 @@ export const inventoryQueries = {
     if (error) throw error
     return data || []
   },
+  getProducts: async ({ businessId }: {  businessId: string }) => {
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .eq("business_id", businessId)
+      .eq("is_active", true)
+      .order("name")
+
+    if (error) throw error
+    return data || []
+  },
+
+
   getBanks: async ({ businessId }: {  businessId: string }) => {
     const { data, error } = await supabase
       .from("banks")

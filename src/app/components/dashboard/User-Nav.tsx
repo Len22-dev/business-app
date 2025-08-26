@@ -13,21 +13,29 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { LogoutButton } from "@/components/Logout-Button"
+import { useUser } from "@/hooks/useUsers"
+// interface User {
+  // email: string
+  // name: string
+  // image: string
+// }
 
-export function UserNav() {
+export function UserNav({userId}:{userId: string}) {
+  const  user  = useUser(userId)
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Avatar className="h-8 w-8 cursor-pointer">
-          <AvatarImage src="/placeholder.svg?height=32&width=32" alt="User" />
+          <AvatarImage src="/Group 15.svg" alt="User" />
           <AvatarFallback>JD</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">John Doe</p>
-            <p className="text-xs leading-none text-muted-foreground">john.doe@example.com</p>
+            <p className="text-sm font-medium leading-none">{user.data?.fullName ||'John Doe'}</p>
+            <p className="text-xs leading-none text-muted-foreground">{user.data?.email || "john.doe@example.com"}</p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

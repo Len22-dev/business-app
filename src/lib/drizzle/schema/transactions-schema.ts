@@ -17,16 +17,19 @@ export const transactionStatusEnum = pgEnum('transaction_status', ['draft', 'pen
 
 export const transactions = pgTable('transactions', {
     id: uuid('id').primaryKey().defaultRandom(),
-    businessId: uuid('business_id').references(() => businesses.id, { onDelete: 'cascade' }).notNull(),
+    businessId: uuid('business_id').references(() => businesses.id, { onDelete: 'cascade' }),
+    locationId: uuid('location_id').references(() => locations.id, { onDelete: 'cascade' }),
     categoryId: uuid('category_id').references(() => categories.id),
+    entityId: uuid('entity_id'), // vendor, customer, employee
+    entityType: text('entity_type'), // 'vendor', 'customer', 'employee', 'business'
     transactionNumber: serial('transaction_number'),
-    transactionType: transactionTypeEnum('transaction_type').notNull(),
+    transactionType: transactionTypeEnum('transaction_type'),
     totalAmount: integer('total_amount').notNull().default(0),
     transactionDate: timestamp('transaction_date').defaultNow(),
-    referenceId:uuid('reference_id'), // reference the transaction type id
+    referenceNumber:text('reference_number').unique(), // the reference number for the transaction
     transactionStatus: transactionStatusEnum('transaction_status').default('draft'),
-    createdBy: uuid('created_by').references(() => users.id, { onDelete: 'cascade' }).notNull(),
-    approvedBy: uuid('approved_by').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+    createdBy: uuid('created_by').references(() => users.id, { onDelete: 'cascade' }),
+    approvedBy: uuid('approved_by').references(() => users.id, { onDelete: 'cascade' }),
     attachments: jsonb('attachments'), // Array of file URLs
     metadata: jsonb('metadata'),
     ...timestamps,
@@ -71,10 +74,14 @@ export const recurringTransactions = pgTable('recurring_transactions', {
 });
 
 
-  export const transactionsRelations = relations(transactions, ({ one }) => ({
+  export const transactionsRelations = relations(transactions, ({ one, many }) => ({
     business: one(businesses, {
       fields: [transactions.businessId],
       references: [businesses.id],
+    }),
+    location: one(locations, {
+      fields: [transactions.locationId],
+      references: [locations.id],
     }),
     createdBy: one(users, {
       fields: [transactions.createdBy],
@@ -87,8 +94,8 @@ export const recurringTransactions = pgTable('recurring_transactions', {
     category: one(categories, {
       fields: [transactions.categoryId],
       references: [categories.id],
-
-    })
+    }),
+    transactionLineItems: many(transactionLineItems)
   }));
 
   export const transactionLineItemsRelations = relations(transactionLineItems, ({one, many}) => ({

@@ -1,10 +1,11 @@
 import { eq, and, desc, sql, ilike } from 'drizzle-orm';
 import { db } from '../drizzle';
-import { reports } from '../schema/general';
+import { reports } from '../schema/report-schema';
 import type { Report } from '../types';
 import { z } from 'zod';
-import { uuidSchema, paginationSchema } from '../../zod/userSchema';
+import { uuidSchema, paginationSchema } from '../../zod/businessSchema';
 import { DatabaseError, NotFoundError, ValidationError } from '@/lib/zod/errorSchema';
+import { createReportSchema } from '@/lib/zod/reportSchema';
 
 // Query parameter schema
 const reportQuerySchema = z.object({
@@ -83,19 +84,19 @@ export const reportQueries = {
   },
 
   // Create report
-  async create(reportData: Record<string, unknown>): Promise<Report> {
+  async create(reportData: Record<string, unknown>): Promise<z.infer <typeof createReportSchema>> {
     try {
       // Add zod validation here if you have a schema
-      // const validatedData = createReportSchema.parse(reportData);
+       const validatedData = createReportSchema.parse(reportData);
       const [report] = await db
         .insert(reports)
         .values({
-          ...reportData,
+          ...validatedData,
           created_at: new Date(),
           updated_at: new Date(),
         })
         .returning();
-      return report;
+      return report as z.infer<typeof createReportSchema>;
     } catch (error) {
       if (error instanceof z.ZodError) {
         throw new ValidationError(`Validation failed: ${error.errors.map(e => e.message).join(', ')}`);

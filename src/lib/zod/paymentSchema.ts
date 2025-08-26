@@ -3,31 +3,34 @@ import { z } from "zod";
 export const paymentMethodEnum = z.enum(['cash', 'bank_transfer', 'card', 'cheque', 'mobile_money']);
 
 export const paymentStatusEnum = z.enum([
-  'PENDING',
-  'COMPLETED',
-  'FAILED',
-  'CANCELLED',
-  'REFUNDED',
+  'pending',
+  'paid',
+  'failed',
+  'cancelled',
+  'refunded',
+  'part_payment'
 ]);
 
 export const sourceTypeEnum = z.enum([
-  'SALES',
-  'PURCHASE',
-  'EXPENSE',
+  'sales',
+  'purchase',
+  'expense',
+  'others'
 ]);
 
 export const payerTypeEnum = z.enum([
-  'CUSTOMER',
-  'VENDOR',
-  'EMPLOYEE',
-  'COMPANY',
+  'customer',
+  'vendor',
+  'employee',
+  'company',
+  'others'
 ]);
 
 export const allocationTypeEnum = z.enum([
-  'INVOICE',
-  'ADVANCE',
-  'REFUND',
-  'ADJUSTMENT',
+  'invoice',
+  'advance',
+  'refund',
+  'adjustment',
 ]);
 
 export const paymentSchema = z.object({
@@ -39,24 +42,24 @@ export const paymentSchema = z.object({
   payerType: payerTypeEnum,
   payerId: z.string().uuid({ message: "Invalid UUID format" }),
   bankAccountId: z.string().uuid({ message: "Invalid UUID format" }),
-  currencyCode: z.string().length(3, { message: "Currency code must be 3 characters" }).default('NGN'),
+  currencyCode: z.string().length(3, { message: "Currency code must be 3 characters" }).default('NGN').nullable().optional(),
   amount: z.number().int().min(1, { message: "Amount must be positive" }),
-  paymentDate: z.date().optional(),
+  paymentDate: z.date().optional().nullable(),
   paymentMethod: paymentMethodEnum,
-  reference: z.string().max(100, { message: "Reference too long" }).optional(),
-  checkNumber: z.string().max(50, { message: "Check number too long" }).optional(),
-  cardLastFour: z.string().length(4, { message: "Card last four must be 4 digits" }).optional(),
-  transactionId: z.string().max(100, { message: "Transaction ID too long" }).optional(),
-  paymentStatus: paymentStatusEnum.default('PENDING'),
-  approvedBy: z.string().uuid({ message: "Invalid UUID format" }).optional(),
-  approvedAt: z.date().optional(),
-  createdBy: z.string().uuid({ message: "Invalid UUID format" }).optional(),
-  notes: z.string().optional(),
-  reconciled: z.boolean().default(false),
-  reconciledAt: z.date().optional(),
-  createdAt: z.date().optional(),
-  updatedAt: z.date().optional(),
-  deletedAt: z.date().optional(),
+  reference: z.string().max(100, { message: "Reference too long" }).optional().nullable(),
+  checkNumber: z.string().max(50, { message: "Check number too long" }).optional().nullable(),
+  cardLastFour: z.string().length(4, { message: "Card last four must be 4 digits" }).optional().nullable(),
+  transactionId: z.string().max(100, { message: "Transaction ID too long" }).optional().nullable(),
+  paymentStatus: paymentStatusEnum.default('pending').optional().nullable(),
+  approvedBy: z.string().uuid({ message: "Invalid UUID format" }).optional().nullable(),
+  approvedAt: z.date().optional().nullable(),
+  createdBy: z.string().uuid({ message: "Invalid UUID format" }).optional().nullable(),
+  notes: z.string().optional().nullable(),
+  reconciled: z.boolean().default(false).nullable(),
+  reconciledAt: z.date().optional().nullable(),
+  createdAt: z.date().optional().nullable(),
+  updatedAt: z.date().optional().nullable(),
+  deletedAt: z.date().optional().nullable(),
 });
 
 export const createPaymentSchema = paymentSchema.omit({

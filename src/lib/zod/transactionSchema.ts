@@ -1,6 +1,6 @@
 import { z } from "zod";
-
 export const transactionTypeEnum = z.enum(['sales', 'payment', 'payroll', 'purchase', 'expense', 'journal', 'transfer']);
+export const entityTypeEnum = z.enum(['customer', 'vendor', 'bank', 'product', 'employee', 'location', 'other']);
 export const transactionStatusEnum = z.enum(['draft', 'pending', 'approved', 'rejected', 'completed', 'cancelled', 'failed']);
 
 export const transactionSchema = z.object({
@@ -11,7 +11,9 @@ export const transactionSchema = z.object({
   transactionType: transactionTypeEnum,
   totalAmount: z.number().int().min(0).default(0),
   transactionDate: z.date().optional(),
-  referenceId: z.string().uuid({ message: "Invalid UUID format" }).optional(),
+  entityId: z.string().uuid({ message: "Invalid UUID format" }).optional(),
+  entityType: entityTypeEnum.default('customer'),
+  referenceNumber: z.string().max(255, { message: "Reference number too long" }).optional(),
   transactionStatus: transactionStatusEnum.default('draft'),
   createdBy: z.string().uuid({ message: "Invalid UUID format" }),
   approvedBy: z.string().uuid({ message: "Invalid UUID format" }),
@@ -82,3 +84,70 @@ export const createRecurringTransactionSchema = recurringTransactionSchema.omit(
 });
 
 export const updateRecurringTransactionSchema = createRecurringTransactionSchema.partial();
+
+
+export const createTransactionLineItemSchemas = transactionLineItemSchema.omit({
+  id: true,
+});
+
+export const updateTransactionLineItemSchemas = createTransactionLineItemSchemas.partial();
+
+// Combined schema for transaction with line items (for forms)
+export const transactionWithItemsSchema = createTransactionSchema.merge(
+  createTransactionLineItemSchemas.pick({
+    item: true,
+    description: true,
+    quantity: true,
+    unitAmount: true,
+    taxAmount: true,
+    discountAmount: true,
+    subtotalAmount: true,
+  })
+);
+export const fullTransactionWithItemsSchema = transactionSchema.merge(
+  transactionLineItemSchema.pick({
+    item: true,
+    description: true,
+    quantity: true,
+    unitAmount: true,
+    taxAmount: true,
+    discountAmount: true,
+    subtotalAmount: true,
+  })
+)
+
+// Form-specific schema with additional validation
+export const transactionFormSchemas = transactionWithItemsSchema.extend({
+  receiptUrl: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
+}).refine((data) => {
+  // Ensure total amount matches calculated amount
+  const subtotal = (data.unitAmount || 0) * (data.quantity || 1);
+  const calculatedTotal = subtotal + (data.taxAmount || 0) - (data.discountAmount || 0);
+  return Math.abs((data.totalAmount || 0) - calculatedTotal) < 0.01;
+}, {
+  message: "Total amount doesn't match calculated amount",
+  path: ["totalAmount"],
+});
+
+export const updateTransactionFormSchema = fullTransactionWithItemsSchema.partial()
+
+
+export const createRecurringTransactionSchemas = recurringTransactionSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+});
+
+export const updateRecurringTransactionSchemas = createRecurringTransactionSchemas.partial();
+
+// Export types
+export type Transaction = z.infer<typeof transactionSchema>;
+export type CreateTransactionData = z.infer<typeof createTransactionSchema>;
+export type UpdateTransactionData = z.infer<typeof updateTransactionSchema>;
+export type TransactionLineItem = z.infer<typeof transactionLineItemSchema>;
+export type CreateTransactionLineItemData = z.infer<typeof createTransactionLineItemSchemas>;
+export type TransactionWithItems = z.infer<typeof transactionWithItemsSchema>;
+export type FullTransactionWithItems = z.infer<typeof fullTransactionWithItemsSchema>;
+export type TransactionFormData = z.infer<typeof transactionFormSchemas>;
+export type updateTransactionFormSchemas = z.infer<typeof updateTransactionFormSchema>

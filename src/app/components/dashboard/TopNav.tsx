@@ -25,16 +25,25 @@ import {
 import { ModeToggle } from '@/components/Theme-Selecor'
 import { UserNav } from './User-Nav'
 
+
+
+
+
+
+
 interface TopNavProps {
   isSidebarOpen: boolean
   onSidebarToggle: () => void
   onMobileMenuToggle: () => void
+  userId: string
 }
 
 export function TopNav({ 
   isSidebarOpen, 
   onSidebarToggle, 
-  onMobileMenuToggle 
+  onMobileMenuToggle,
+  userId
+  
 }: TopNavProps) {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -170,7 +179,7 @@ export function TopNav({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <UserNav/>
+              <UserNav userId={userId}/>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
              

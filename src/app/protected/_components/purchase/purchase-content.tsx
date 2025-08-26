@@ -80,7 +80,7 @@ export function PurchaseContent({userId, businessId}: PurchaseContentProps) {
           <PurchaseOrdersTab  userId={userId} businessId={businessId}/>
         </TabsContent>
         <TabsContent value="suppliers" className="space-y-4">
-          <SuppliersTab />
+          <SuppliersTab businessId={businessId} />
         </TabsContent>
         <TabsContent value="receipts" className="space-y-4">
           <ReceiptsTab />

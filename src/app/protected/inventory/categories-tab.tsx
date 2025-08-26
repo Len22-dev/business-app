@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Plus, Search, MoreHorizontal, Edit, Trash2, Tag, Package } from "lucide-react"
-import { AddLocationModal } from "./modal/addLocation-modal"
+import { AddCategoryModal } from "./modal/addCategory-modal"
 import { EditCategoryModal } from "./modal/editCategory-modal"
 
 interface Category {
@@ -236,7 +236,7 @@ export function CategoriesTab({businessId}:{businessId: string}) {
       </Card>
 
       {/* Modals */}
-      <AddLocationModal open={showAddModal} onOpenChange={setShowAddModal} businessId={businessId}/>
+      <AddCategoryModal open={showAddModal} onOpenChange={setShowAddModal} businessId={businessId}/>
       {selectedCategory &&(
         <EditCategoryModal 
         open={showEditModal} 

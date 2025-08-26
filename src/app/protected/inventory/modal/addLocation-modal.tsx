@@ -15,7 +15,7 @@ import { Tag } from "lucide-react"
 import { useCreateLocation } from "@/hooks/useLocation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { createLocationSchema } from "@/lib/zod/productSchema"
+import { createLocationSchema } from "@/lib/zod/businessSchema"
 import { useToast } from "@/components/ui/use-toast"
 import { TextField } from "@/components/formFields"
 import { Form } from "@/components/ui/form"
@@ -30,6 +30,7 @@ interface AddLocationModalProps {
 interface LocationType {
   businessId: string
   name: string
+  code: string
   description?: string
   address?: string
   isActive: boolean
@@ -44,6 +45,7 @@ export function AddLocationModal({ open, onOpenChange, businessId }: AddLocation
     defaultValues: {
       businessId: businessId,
       name: "",
+      code:'',
       description: "",
       isActive: true,
     },
@@ -101,6 +103,15 @@ export function AddLocationModal({ open, onOpenChange, businessId }: AddLocation
               name="description"
               label="Location Description"
               placeholder="Enter location description"
+              disabled={isPending}
+            />
+          </div>
+          <div className="space-y-2">
+           <TextField
+              control={form.control}
+              name="code"
+              label="Location Code"
+              placeholder="Enter location code"
               disabled={isPending}
             />
           </div>

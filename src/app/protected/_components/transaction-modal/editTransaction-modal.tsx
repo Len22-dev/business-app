@@ -6,7 +6,7 @@ import { Form } from "@/components/ui/form"
 import { Button } from "@/components/ui/button"
 import { useUpdateTransaction } from "@/hooks/useTransaction"
 import { useToast } from "@/components/ui/use-toast"
-import { updateTransactionSchema } from "@/lib/zod/transactionSchema"
+import { updateTransactionFormSchema, updateTransactionFormSchemas, updateTransactionSchema } from "@/lib/zod/transactionSchema"
 import { BaseModal } from "@/components/baseModal"
 import { SelectField } from "@/components/formComponents/selectFields"
 import { TextField } from "@/components/formFields"
@@ -16,25 +16,25 @@ import { z } from "zod"
 
 type UpdateTransactionType = z.infer<typeof updateTransactionSchema>
 
-interface TransactionType {
-  id: string
-  businessId: string
-  categoryId?: string
-  item: string
-  description: string
-  amount: number
-  type: "income" | "expense" | "transfer"
-  transactionStatus: "pending" | "completed" | "failed" | "cancelled" 
-  transactionDate: Date | undefined
-  reference?: string
-  attachments?: string[]
-  metadata?: object
-}
+// interface TransactionType {
+//   id: string
+//   businessId: string
+//   categoryId?: string
+//   item: string
+//   description: string
+//   totalAmount: number
+//   type: "income" | "expense" | "transfer"
+//   transactionStatus: "pending" | "completed" | "failed" | "cancelled" 
+//   transactionDate: Date | undefined
+//   reference?: string
+//   attachments?: string[]
+//   metadata?: object
+// }
 
 interface EditTransactionModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  transaction: TransactionType
+  transaction: updateTransactionFormSchemas
   businessId: string
   id: string
 }
@@ -49,15 +49,15 @@ export function EditTransactionModal({
   const { mutate: updateTransaction, isPending } = useUpdateTransaction()
   const { toast } = useToast()
 
-  const form = useForm<UpdateTransactionType>({
-    resolver: zodResolver(updateTransactionSchema),
+  const form = useForm<updateTransactionFormSchemas>({
+    resolver: zodResolver(updateTransactionFormSchema),
     defaultValues: {
       id: id,
       businessId,
       item: "",
       description: "",
-      amount: 0,
-      type: "income",
+      totalAmount: 0,
+      transactionType: "sales",
       transactionStatus: "pending",
       transactionDate: new Date() || undefined,
     },
@@ -71,12 +71,12 @@ export function EditTransactionModal({
         businessId: transaction.businessId,
         item: transaction.item || "",
         description: transaction.description || "",
-        amount: transaction.amount || 0,
-        type: transaction.type || "income",
+        totalAmount: transaction.totalAmount || 0,
+        transactionType: transaction.transactionType || "sales",
         transactionStatus: transaction.transactionStatus || "pending",
         transactionDate: transaction.transactionDate ? new Date(transaction.transactionDate) : new Date(),
         categoryId: transaction.categoryId,
-        reference: transaction.reference,
+        entityType: transaction.entityType,
         attachments: transaction.attachments,
         metadata: transaction.metadata,
       })
@@ -106,16 +106,32 @@ export function EditTransactionModal({
   }
 
   const transactionTypes = [
-    { value: "income", label: "Income" },
+    { value: "sales", label: "Sales" },
     { value: "expense", label: "Expense" },
     { value: "transfer", label: "Transfer" },
+    { value: "payment", label: "Payment" },
+    { value: "purchase", label: "Purchase" },
+    { value: "payroll", label: "Payroll" },
+    { value: "journal", label: "Journal" },
+  ]
+
+  const entityTypes = [
+    { value: "customer", label: "Customer" },
+    { value: "vendor", label: "Vendor" },
+    { value: "bank", label: "Bank" },
+    { value: "product", label: "Product" },
+    { value: "employee", label: "Employee" },
+    { value: "other", label: "Other" },
   ]
 
   const statusOptions = [
+    { value: "draft", label: "Draft" },
     { value: "pending", label: "Pending" },
     { value: "completed", label: "Completed" },
     { value: "failed", label: "Failed" },
     { value: "cancelled", label: "Cancelled" },
+    { value: "approved", label: "Approved" },
+    { value: "rejected", label: "Rejected" },
   ]
 
   const footer = (
@@ -151,8 +167,8 @@ export function EditTransactionModal({
           <div className="grid gap-4 py-4">
             <SelectField
               control={form.control}
-              name="type"
-              label="Type"
+              name="transactionType"
+              label="Transaction Type"
               placeholder="Select type"
               options={transactionTypes}
               disabled={isPending}
@@ -161,8 +177,8 @@ export function EditTransactionModal({
             
             <TextField
               control={form.control}
-              name="amount"
-              label="Amount (₦)"
+              name="totalAmount"
+              label="TotaltotalAmount (₦)"
               placeholder="0.00"
               type="number"
               disabled={isPending}
@@ -204,12 +220,14 @@ export function EditTransactionModal({
               disabled={isPending}
             />
             
-            <TextField
+            <SelectField
               control={form.control}
-              name="reference"
-              label="Reference"
-              placeholder="Enter reference number (optional)"
+              name="entityType"
+              label="Entity Type"
+              placeholder="Select type"
+              options={entityTypes}
               disabled={isPending}
+              required
             />
           </div>
         </form>

@@ -237,7 +237,7 @@ const onSubmit = (data: SaleFormData) => {
       title="Add New Sale"
       description="Enter the details of your sale transaction. Fill in all the required information."
       footer={footer}
-      className="max-w-max"
+      className="w-7xl"
     >
       <Form {...form}>
         <form id="add-sale-form" onSubmit={form.handleSubmit(onSubmit)}>

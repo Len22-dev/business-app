@@ -2,26 +2,27 @@ import { eq,  desc } from 'drizzle-orm';
 import { db } from '../drizzle';
 import { workFlows, workFlowSteps } from '../schema/workFlow-schema';
 import { z } from 'zod';
+import { createWorkFlowSchema, createWorkFlowStepSchema } from '@/lib/zod/workFlowSchema';
 
 // Zod schemas for validation
-const createWorkFlowSchema = z.object({
-  businessId: z.string().uuid(),
-  name: z.string().min(1),
-  description: z.string().optional(),
-  type: z.enum(['approval', 'review', 'notification']),
-  isActive: z.boolean().optional(),
-});
+// const createWorkFlowSchema = z.object({
+  // businessId: z.string().uuid(),
+  // name: z.string().min(1),
+  // description: z.string().optional(),
+  // type: z.enum(['approval', 'review', 'notification']),
+  // isActive: z.boolean().optional(),
+// });
 
 const updateWorkFlowSchema = createWorkFlowSchema.partial();
 
-const createWorkFlowStepSchema = z.object({
-  workFlowId: z.string().uuid(),
-  name: z.string().min(1),
-  description: z.string().optional(),
-  stepNumber: z.number().int().min(1),
-  stepType: z.enum(['approval', 'review', 'notification']),
-  isActive: z.boolean().optional(),
-});
+// const createWorkFlowStepSchema = z.object({
+  // workFlowId: z.string().uuid(),
+  // name: z.string().min(1),
+  // description: z.string().optional(),
+  // stepNumber: z.number().int().min(1),
+  // stepType: z.enum(['approval', 'review', 'notification']),
+  // isActive: z.boolean().optional(),
+// });
 
 const updateWorkFlowStepSchema = createWorkFlowStepSchema.partial();
 

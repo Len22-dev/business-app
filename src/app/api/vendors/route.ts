@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { vendorQueries } from '@/lib/drizzle/queries/vendor-queries';
 import { AuthChecker } from '@/hooks/userCherker';
+import { vendorWithContactSchema } from '@/lib/zod/vendorSchema';
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,13 +29,38 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    await AuthChecker();
-    const data = await request.json();
-    const vendor = await vendorQueries.createVendor(data);
-    return NextResponse.json(vendor, { status: 201 });
-  } catch (error) {
+    const body = await request.json();
+    console.log('Creating vendor with data:', body);
+    
+    // Extract vendorData from the request body
+    const { vendorData, } = body;
+    
+    // Validate the vendorData against the schema
+    const validatedData = vendorWithContactSchema.parse(vendorData);
+    
+    // Use the correct method for creating vendor with contact
+    const result = await vendorQueries.createVendorWithContact(validatedData);
+    
+    console.log('Vendor created successfully:', result);
+    
+    return NextResponse.json(result, { status: 201 });
+  } catch (error: any) {
     console.error('Error creating vendor:', error);
-    return NextResponse.json({ error: 'Failed to create vendor' }, { status: 500 });
+    
+    if (error.name === 'ZodError') {
+      return NextResponse.json(
+        { 
+          message: 'Validation failed', 
+          errors: error.issues 
+        }, 
+        { status: 400 }
+      );
+    }
+    
+    return NextResponse.json(
+      { message: 'Internal server error' }, 
+      { status: 500 }
+    );
   }
 }
 

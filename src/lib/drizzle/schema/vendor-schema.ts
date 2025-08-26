@@ -1,4 +1,4 @@
-import { pgTable, text, uuid, varchar, boolean, index, jsonb, integer, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, uuid, varchar, boolean, index, jsonb, timestamp } from "drizzle-orm/pg-core";
 import { businesses } from "./businesses-schema";
 import { payments } from "./payment-schema";
 import { relations } from "drizzle-orm";
@@ -20,7 +20,7 @@ export const vendors = pgTable('vendors', {
     company: text('company'),
     taxId: varchar('tax_id', { length: 50 }),
     address: jsonb('address'),
-    paymentTerms: integer('payment_terms').default(30),
+    paymentTerms: jsonb('payment_terms'),
     notes: text('notes'),
     isActive: boolean('is_active').default(true),
     ...timestamps,

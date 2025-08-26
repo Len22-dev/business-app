@@ -2,19 +2,20 @@ import { eq, desc } from 'drizzle-orm';
 import { db } from '../drizzle';
 import { notifications } from '../schema/notifications-schema';
 import { z } from 'zod';
+import { createNotificationSchema } from '@/lib/zod/notificationSchema';
 
-const createNotificationSchema = z.object({
-  businessId: z.string().uuid().optional(),
-  userId: z.string().uuid().optional(),
-  title: z.string().min(1),
-  message: z.string().min(1),
-  type: z.enum(['info', 'warning', 'error', 'success']).optional(),
-  isRead: z.boolean().optional(),
-  actionUrl: z.string().optional(),
-  metadata: z.any().optional(),
-  expiresAt: z.date().optional(),
-});
-
+// const createNotificationSchema = z.object({
+  // businessId: z.string().uuid().optional(),
+  // userId: z.string().uuid().optional(),
+  // title: z.string().min(1),
+  // message: z.string().min(1),
+  // type: z.enum(['info', 'warning', 'error', 'success']).optional(),
+  // isRead: z.boolean().optional(),
+  // actionUrl: z.string().optional(),
+  // metadata: z.any().optional(),
+  // expiresAt: z.date().optional(),
+// });
+// 
 const updateNotificationSchema = createNotificationSchema.partial();
 
 export const notificationQueries = {

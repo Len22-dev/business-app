@@ -3,12 +3,12 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Transaction } from "@/lib/drizzle/types"
+import { FullTransactionWithItems } from "@/lib/zod/transactionSchema"
 
 interface ViewTransactionModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  transaction: Transaction | null
+  transaction: FullTransactionWithItems | null
 }
 
 export function ViewTransactionModal({ open, onOpenChange, transaction }: ViewTransactionModalProps) {
@@ -38,36 +38,36 @@ export function ViewTransactionModal({ open, onOpenChange, transaction }: ViewTr
           <Separator />
 
           <div className="grid grid-cols-3 gap-4">
-            <div className="font-medium">Type:</div>
+            <div className="font-medium">TratransactionType:</div>
             <div className="col-span-2">
-              <Badge variant={transaction.type === "income" ? "default" : "secondary"}>{transaction.type}</Badge>
+              <Badge variant={transaction.transactionType === "sales" ? "default" : "secondary"}>{transaction.transactionType}</Badge>
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
             <div className="font-medium">Amount:</div>
             <div
-              className={`col-span-2 font-semibold ${transaction.type === "income" ? "text-green-600" : "text-red-600"}`}
+              className={`col-span-2 font-semibold ${transaction.transactionType === "sales" ? "text-green-600" : "text-red-600"}`}
             >
-              {transaction.type === "income" ? "+" : "-"}
-              {formatCurrency(Number(transaction.amount))}
+              {transaction.transactionType === "sales" ? "+" : "-"}
+              {formatCurrency(Number(transaction.totalAmount))}
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
             <div className="font-medium">Date:</div>
-            <div className="col-span-2">{new Date(transaction.created_at).toLocaleDateString()}</div>
+            <div className="col-span-2">{new Date(transaction.createdAt ?? '').toLocaleDateString()}</div>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
             <div className="font-medium">Customer/Vendor:</div>
-            <div className="col-span-2">{transaction.reference}</div>
+            <div className="col-span-2">{transaction.entityType === 'customer' || transaction.entityType === 'vendor'}</div>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
             <div className="font-medium">Status:</div>
             <div className="col-span-2">
-              <Badge variant={transaction.status === "completed" ? "default" : "outline"}>{transaction.status}</Badge>
+              <Badge variant={transaction.transactionStatus === "completed" ? "default" : "outline"}>{transaction.transactionStatus}</Badge>
             </div>
           </div>
 

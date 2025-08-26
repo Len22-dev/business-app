@@ -65,6 +65,7 @@ export const updateSaleItemSchema = createSaleItemSchema.partial();
 
 export const saleFormSchema = z.object({
   businessId: z.string().uuid({ message: "Invalid UUID format" }),
+  locationId: z.string().uuid({ message: "Invalid UUID format" }),
   customerName: z.string().min(1, { message: "Customer name is required" }),
   description: z.string().min(1, { message: "Description is required" }).optional(),
   status: z.enum(['pending', 'part_payment', 'paid', 'failed', 'refunded']).default('pending'),

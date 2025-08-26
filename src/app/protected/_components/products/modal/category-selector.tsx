@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { ChevronDown, Loader2, AlertTriangle } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -39,7 +39,6 @@ export function CategorySelector({
 }: CategorySelectorProps) {
   const [inputValue, setInputValue] = useState(defaultValue)
   const [isOpen, setIsOpen] = useState(false)
-  const [filteredCategories, setFilteredCategories] = useState<CategoryItem[]>([])
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState<number>(-1)
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
   
@@ -55,22 +54,21 @@ export function CategorySelector({
     refetch: refetchCategories
   } = useBusinessCategories(businessId)
 
-  // Filter categories based on input
-  const filterCategories = useCallback((searchValue: string) => {
-    if (!searchValue.trim()) {
+  // FIXED: Use useMemo instead of useCallback to compute filtered categories
+  // This prevents the infinite re-render issue
+  const filteredCategories = useMemo(() => {
+    if (!inputValue.trim()) {
       return categories
     }
     return categories.filter((category: CategoryItem) =>
-      category.name.toLowerCase().includes(searchValue.toLowerCase())
+      category.name.toLowerCase().includes(inputValue.toLowerCase())
     )
-  }, [categories])
+  }, [categories, inputValue])
 
-  // Update filtered categories when input changes
+  // FIXED: Reset active suggestion when filtered categories change
   useEffect(() => {
-    const filtered = filterCategories(inputValue)
-    setFilteredCategories(filtered)
     setActiveSuggestionIndex(-1)
-  }, [inputValue, filterCategories])
+  }, [filteredCategories])
 
   // Handle input value changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,7 +85,6 @@ export function CategorySelector({
   const handleInputFocus = () => {
     if (!disabled) {
       setIsOpen(true)
-      setFilteredCategories(filterCategories(inputValue))
     }
   }
 
@@ -100,14 +97,14 @@ export function CategorySelector({
   }
 
   // Select a category
-  const selectCategory = (category: CategoryItem) => {
+  const selectCategory = useCallback((category: CategoryItem) => {
     setInputValue(category.name)
     setSelectedCategoryId(category.id)
     setIsOpen(false)
     setActiveSuggestionIndex(-1)
     onCategoryChange(category.id)
     inputRef.current?.blur()
-  }
+  }, [onCategoryChange])
 
   // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -153,7 +150,6 @@ export function CategorySelector({
       inputRef.current?.blur()
     } else {
       setIsOpen(true)
-      setFilteredCategories(filterCategories(inputValue))
       inputRef.current?.focus()
     }
   }
@@ -266,13 +262,13 @@ export function CategorySelector({
         {isOpen && (
           <div
             ref={suggestionsRef}
-            className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto"
+            className="absolute z-50 mt-1 w-full bg-black text-accent-foreground border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto"
           >
             {filteredCategories.length > 0 ? (
-              filteredCategories.map((category, index) => (
+              filteredCategories.map((category:CategoryItem, index:number) => (
                 <div
                   key={category.id}
-                  className={`bg-black text-accent-foreground px-4 py-3 cursor-pointer transition-colors ${
+                  className={`px-4 py-3 cursor-pointer transition-colors ${
                     index === activeSuggestionIndex 
                       ? 'bg-blue-50 text-blue-900' 
                       : 'hover:bg-gray-50'

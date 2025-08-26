@@ -36,7 +36,9 @@ export const inventory = pgTable('inventory', {
 
 export const stockMovements = pgTable('stock_movements', {
   id: uuid('id').primaryKey().defaultRandom(),
+  businessId: uuid('business_id').references(() => businesses.id, { onDelete: 'cascade' }).notNull(),
   productId: uuid('product_id').references(() => products.id, { onDelete: 'cascade' }).notNull(),
+  inventoryId: uuid('inventory_id').references(() => inventory.id, { onDelete: 'cascade' }).notNull(),
   locationId: uuid('location_id').references(() => locations.id, { onDelete: 'cascade' }).notNull(),
   inventoryLocationId: uuid('location_id').references(() => inventoryLocations.id, { onDelete: 'cascade' }),
   movementType: stockMovementEnum('movement_type').notNull(),
@@ -59,6 +61,26 @@ export const stockMovements = pgTable('stock_movements', {
   referenceIdIdx: index('stock_movements_reference_id_idx').on(table.referenceId),
 }));
 
+export const stockAdjustment = pgTable('stock_adjustments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  businessId: uuid('business_id').references(() => businesses.id, { onDelete: 'cascade' }).notNull(),
+  productId: uuid('product_id').references(() => products.id, { onDelete: 'cascade' }).notNull(),
+  inventoryId: uuid('inventory_id').references(() => inventory.id, { onDelete: 'cascade' }).notNull(),
+  locationId: uuid('location_id').references(() => locations.id, { onDelete: 'cascade' }).notNull(),
+  inventoryLocationId: uuid('location_id').references(() => inventoryLocations.id, { onDelete: 'cascade' }),
+  quantity: integer('quantity').notNull(),
+  reason: text('reason').notNull(),
+  description: text('description'),
+  adjustmentDate: timestamp('adjustment_date').defaultNow().notNull(),
+  status: statusEnum('status').default('Pending'), // 'pending', 'confirmed', 'cancelled'
+  createdBy: uuid('created_by').references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  productIdx: index('stock_adjustments_product_idx').on(table.productId),
+  dateIdx: index('stock_adjustments_date_idx').on(table.createdAt),
+})
+);
+
 // --- Multi-location Inventory ---
 export const inventoryLocations = pgTable('inventory_locations', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -66,6 +88,8 @@ export const inventoryLocations = pgTable('inventory_locations', {
   name: text('name').notNull(),
   description: text('description'),
   address: jsonb('address'),
+  locationType: text('location_type').notNull(), // 'warehouse', 'store', etc.
+  parentLocationId: uuid('parent_location_id').references(() => inventoryLocations.id, { onDelete: 'set null' }), // Optional parent location for hierarchical structures
   isActive: boolean('is_active').default(true),
   ...timestamps,
 }, (table) => ({
@@ -108,7 +132,7 @@ export const serialNumbers = pgTable('serial_numbers', {
 }));
 
 
-export const inventoryRelations = relations(inventory, ({ one }) => ({
+export const inventoryRelations = relations(inventory, ({ one, many }) => ({
   business: one(businesses, {
     fields: [inventory.businessId],
     references: [businesses.id],
@@ -125,10 +149,15 @@ export const inventoryRelations = relations(inventory, ({ one }) => ({
     fields: [inventory.inventoryLocationId],
     references: [inventoryLocations.id],
   }),
+  stockMovements: many(stockMovements),
 }));
 
 
-export const stockMovementsRelations = relations(stockMovements, ({ one }) => ({
+export const stockMovementsRelations = relations(stockMovements, ({ one, many }) => ({
+  business: one(businesses, {
+    fields: [stockMovements.businessId],
+    references: [businesses.id],
+  }),
   product: one(products, {
     fields: [stockMovements.productId],
     references: [products.id],
@@ -145,6 +174,7 @@ export const stockMovementsRelations = relations(stockMovements, ({ one }) => ({
     fields: [stockMovements.inventoryLocationId],
     references: [inventoryLocations.id],
   }),
+  stockAdjustments: many(stockAdjustment),
 }));
 
 export const inventoryLocationsRelations = relations(inventoryLocations, ({ one }) => ({

@@ -7,12 +7,14 @@ import type {
 } from '../types';
 import {
   createTransactionSchema,
+  TransactionFormData,
+  transactionFormSchemas,
   updateTransactionSchema,
 } from '../../zod/transactionSchema';
 import { z } from 'zod';
 import { paginationSchema, uuidSchema } from '../../zod/businessSchema';
 import { DatabaseError, NotFoundError, ValidationError } from '@/lib/zod/errorSchema';
-import { businesses, categories, transactions } from '../schema';
+import { businesses, categories, transactionLineItems, transactions } from '../schema';
 
 // Extended types for queries with relations
 type TransactionWithCategory = Transaction & {
@@ -63,6 +65,58 @@ function formatTransactionNumber(num: number): string {
 }
 
 export const transactionQueries = {
+  async createTransactionWithTransactionItem(data: TransactionFormData) {
+    const validatedData = transactionFormSchemas.parse(data);
+
+    return await db.transaction(async (tx) => {
+      // create 
+      
+      const transactionData = {
+        businessesId: validatedData.businessId,
+        categoryId: validatedData.categoryId,
+        transactionNumber: Date.now(),
+        transactionType: validatedData.transactionType,
+        transactionStatus: validatedData.transactionStatus,
+        totalAmount: validatedData.totalAmount,
+        entityId: validatedData.entityId,
+        entityType: validatedData.entityType,
+        referenceNumber: validatedData.referenceNumber,
+        transactionDate: validatedData.transactionDate || new Date(),
+        createdBy: validatedData.createdBy,
+        attachments: validatedData.receiptUrl ? [validatedData.receiptUrl] : [],
+        metadata: validatedData.metadata || {},
+        approvedBy: validatedData.approvedBy,
+      };
+
+      const [transaction] = await tx.insert(transactions).values(transactionData).returning();
+      
+      const transactionItemsData = {
+        transactionId: transaction.id,
+        productId: '',
+        item: validatedData.item,
+        description: validatedData.description,
+        subtotalAmount: validatedData.subtotalAmount,
+        quantity: validatedData.quantity,
+        unitAmount: validatedData.unitAmount,
+        taxAmount: validatedData.taxAmount,
+        discountAmount: validatedData.discountAmount,
+        metadata: validatedData.metadata || {}, // Assuming metadata is optional and can be null
+      };
+
+   const [transactionItems] = await tx.insert(transactionLineItems).values({
+                ...transactionItemsData,
+              }).returning();
+            
+      return {
+        transaction,
+        transactionItems,
+      };
+  });
+},
+
+
+
+
   // Get transaction by ID with category
   async getById(transactionId: string, businessId: string): Promise<TransactionWithCategory | null> {
     try {
@@ -76,6 +130,7 @@ export const transactionQueries = {
         ),
         with: {
           category: true,
+          transactionLineItems: true,
         },
       });
 
@@ -150,8 +205,8 @@ export const transactionQueries = {
           searchConditions.push(ilike(transactions.approvedBy, `%${search}%`));
         }
         
-        if (transactions.referenceId) {
-          searchConditions.push(ilike(transactions.referenceId, `%${search}%`));
+        if (transactions.entityId) {
+          searchConditions.push(ilike(transactions.entityId, `%${search}%`));
         } 
 
         if (searchConditions.length === 1) {
@@ -182,6 +237,7 @@ export const transactionQueries = {
         where: and(...whereConditions.filter(Boolean)),
         with: {
           category: true,
+          transactionLineItems: true,
         },
         orderBy: orderByClause,
         limit,
@@ -208,8 +264,9 @@ export const transactionQueries = {
   },
 
   // Create new transaction
-  async create(transactionData: unknown): Promise<Transaction & { formattedTransactionNumber: string }> {
+  async create(transactionData: TransactionFormData) {
     console.log('Received transactionData:', JSON.stringify(transactionData, null, 2));
+
     try {
       const validatedData = createTransactionSchema.parse(transactionData);
       console.log('Validation passed, validatedData:', JSON.stringify(validatedData, null, 2));

@@ -18,6 +18,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
 // import { useBusinessContext } from "@/context/business-context"
 import { createClient } from "@/lib/supabase/client"
+import { useAdjustInventoryQuantity } from "@/hooks/useInventory"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
 
 interface AddInventoryModalProps {
   isOpen: boolean
@@ -29,25 +33,28 @@ interface AddInventoryModalProps {
 
 export function AddInventoryModal({ isOpen, onClose, userId, businessId, onSuccess }: AddInventoryModalProps) {
   // /const { currentBusiness } = useBusinessContext()
-  const [name, setName] = useState("")
-  const [category, setCategory] = useState("")
-  const [quantity, setQuantity] = useState("")
-  const [unitPrice, setUnitPrice] = useState("")
-  const [description, setDescription] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const { toast } = useToast()
-  const supabase = createClient()
+  const {mutate: createAdjustment, isPending} = useAdjustInventoryQuantity()
+  const {toast } = useToast()  
 
+
+  const form = useForm<z.infer <typeof >>({
+    resolver: zodResolver(),
+    defaultValues: {
+      name: "",
+      category: "",
+      quantity: 0,
+      unitPrice: 0,
+      description: "",
+    },
+  })
   // Reset form when modal closes
   useEffect(() => {
     if (!isOpen) {
-      setName("")
-      setCategory("")
-      setQuantity("")
-      setUnitPrice("")
-      setDescription("")
+      form.reset()
     }
   }, [isOpen])
+
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

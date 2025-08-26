@@ -1,5 +1,5 @@
 import { pgTable, text, uuid, varchar, timestamp, integer, index, jsonb, boolean, pgEnum, } from "drizzle-orm/pg-core";
-import { businesses } from "./businesses-schema";
+import { businesses, locations } from "./businesses-schema";
 import { categories } from "./products-schema";
 import { relations } from "drizzle-orm";
 import { employees } from "./employees-schema";
@@ -21,6 +21,7 @@ const timestamps = {
 export const expenses = pgTable('expenses', {
     id: uuid('id').primaryKey().defaultRandom(),
     businessId: uuid('business_id').references(() => businesses.id, { onDelete: 'cascade' }).notNull(),
+    locationId: uuid('location_id').references(() => locations.id, { onDelete: 'cascade' }).notNull(),
     categoryId: uuid('category_id').references(() => categories.id, { onDelete: 'cascade' }).notNull(),
     reference: varchar('reference', { length: 100 }),
     totalAmount: integer('total_amount').notNull().default(0),
@@ -65,6 +66,10 @@ export const expenses = pgTable('expenses', {
     business: one(businesses, {
       fields: [expenses.businessId],
       references: [businesses.id],
+    }),
+    location: one(locations, {
+      fields: [expenses.locationId],
+      references: [locations.id],
     }),
     vendor: one(employees, {
       fields: [expenses.createdBy],

@@ -4,10 +4,10 @@ import { products } from '../schema/products-schema';
 import { locations } from '../schema';
 import type { Location } from '../types';
 import { z } from 'zod';
-import { uuidSchema, paginationSchema } from '../../zod/generalSchema';
+import { uuidSchema, paginationSchema } from '../../zod/businessSchema';
 import { DatabaseError, NotFoundError, ValidationError } from '@/lib/zod/errorSchema';
 import { inventory } from '../schema';
-import { createLocationSchema, updateLocationSchema } from '@/lib/zod/productSchema';
+import { createLocationSchema, updateLocationSchema } from '../../zod/businessSchema';
 
 // Location schemas
 // const createLocationSchema = z.object({
@@ -60,7 +60,7 @@ export const locationQueries = {
   async getByBusinessId(
     businessId: string,
     filters: LocationFilters = {},
-    paginationData: z.infer<typeof paginationSchema> = { page: 1, limit: 50 }
+    paginationData: z.infer<typeof paginationSchema> = { page: 1, limit: 50, offset:0 }
   ): Promise<{ locations: Location[]; total: number }> {
     try {
       const validatedBusinessId = uuidSchema.parse(businessId);
@@ -260,7 +260,7 @@ export const locationQueries = {
   },
 
   // Create location
-  async create(locationData: z.infer<typeof createLocationSchema>): Promise<Location> {
+  async create(locationData: z.infer<typeof createLocationSchema>) {
     try {
       const validatedData = createLocationSchema.parse(locationData);
 
@@ -279,8 +279,6 @@ export const locationQueries = {
         .insert(locations)
         .values({
           ...validatedData,
-          created_at: new Date(),
-          updated_at: new Date(),
         })
         .returning();
 
@@ -324,7 +322,6 @@ export const locationQueries = {
         .update(locations)
         .set({
           ...validatedData,
-          updated_at: new Date(),
         })
         .where(eq(locations.id, validatedId))
         .returning();
@@ -372,8 +369,6 @@ export const locationQueries = {
         .update(locations)
         .set({
           isActive: false,
-          updated_at: new Date(),
-          deleted_at: new Date(),
         })
         .where(eq(locations.id, validatedId))
         .returning();

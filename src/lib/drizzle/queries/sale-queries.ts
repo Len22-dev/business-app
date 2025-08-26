@@ -9,8 +9,7 @@ import { DatabaseError, NotFoundError, ValidationError } from '@/lib/zod/errorSc
 import { SaleStatus } from '@/lib/types';
 import { createSaleItemSchema, createSalesSchema, updateSalesSchema } from '@/lib/zod/salesSchema';
 import { stockMovements, inventory  } from '../schema/inventory-schema';
-import { transactions } from '../schema/transactions-schema';
-import { ledgerEntries, journalEntries } from '../schema';
+import { ledgerEntries, journalEntries, transactions } from '../schema';
 
 // Local sale item schema for createWithItems function
 // const localCreateSaleItemSchema = z.object({
@@ -215,11 +214,12 @@ export const saleQueries = {
         // If sale is completed, create transaction and ledger entries
         if (validatedSaleData.salesStatus === 'paid') {
           // Insert transaction record
-          await tx.insert(transactions as any).values({
+          await tx.insert(transactions).values({
             businessId: sale.businessId,
             //item: `Sale #${sale.saleNumber}`,
             transactionType: 'sales',
             totalAmount: sale.totalAmount,
+            categoryId: sale.id,
             approvedBy: sale.createdBy,
             createdBy: sale.createdBy,
             //description: 'Sale transaction',

@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
-    const user = await userQueries.getById(userId);
+    const user = await userQueries.getUserById(userId);
     
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const userData = await request.json();
-    const user = await userQueries.create(userData);
+    const user = await userQueries.createUser(userData);
     return NextResponse.json(user, { status: 201 });
   } catch (error) {
     console.error('Error creating user:', error);
@@ -48,7 +48,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
-    const user = await userQueries.update(userId, userData);
+    const user = await userQueries.updateUser(userId, userData);
     return NextResponse.json(user);
   } catch (error) {
     console.error('Error updating user:', error);

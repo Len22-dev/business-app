@@ -45,7 +45,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  await AuthChecker()
+   const {user} = await AuthChecker()
 
   try {
     // Get session server-side
@@ -54,7 +54,7 @@ export default async function DashboardLayout({
     
     return (
       
-      <DashboardShell>
+      <DashboardShell userId={user.id}>
             <Suspense fallback={<DashboardLoading />}>
             {children}
           </Suspense>

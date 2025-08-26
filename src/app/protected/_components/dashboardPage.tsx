@@ -24,10 +24,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AddTransactionModal } from "./transaction-modal/addtransaction-modal"
 import { ViewTransactionModal } from "./transaction-modal/viewTransaction-modal"
 import { EditTransactionModal } from "./transaction-modal/editTransaction-modal"
-import { Transaction } from "@/lib/drizzle/types"
 import { useDashboardStats } from "@/hooks/useBusinesses"
 import { useBusinessTransactions } from "@/hooks/useTransaction"
 import { Skeleton } from "@/components/ui/skeleton"
+import { FullTransactionWithItems} from "@/lib/zod/transactionSchema"
+
 
 interface DashboardClientProps {
   userId: string
@@ -36,7 +37,7 @@ interface DashboardClientProps {
 
 
 
-export function DashboardContent({  businessId,  }: DashboardClientProps) {
+export function DashboardContent({  businessId, userId  }: DashboardClientProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [filterType, setFilterType] = useState("all")
   const [sortBy, setSortBy] = useState("date")
@@ -44,7 +45,7 @@ export function DashboardContent({  businessId,  }: DashboardClientProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
+  const [selectedTransaction, setSelectedTransaction] = useState<FullTransactionWithItems | null>(null)
 
   // Fetch transactions from database
   const { 
@@ -68,27 +69,27 @@ export function DashboardContent({  businessId,  }: DashboardClientProps) {
 
   // Filter and sort transactions
   const filteredAndSortedTransactions = useMemo(() => {
-    const filtered = transactions.filter((transaction: Transaction) => {
+    const filtered = transactions.filter((transaction:  FullTransactionWithItems) => {
       const matchesSearch =
         transaction.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        transaction.reference?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        transaction.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        transaction.referenceNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        transaction.transactionType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         transaction.item?.toLowerCase().includes(searchTerm.toLowerCase())
       
       // If filterType is "all", show all transactions, otherwise the API already filters by type
       return matchesSearch
     })
 
-    return filtered.sort((a: Transaction, b: Transaction) => {
+    return filtered.sort((a: FullTransactionWithItems, b: FullTransactionWithItems) => {
       let aValue, bValue
       switch (sortBy) {
         case "amount":
-          aValue = a.amount
-          bValue = b.amount
+          aValue = a.totalAmount
+          bValue = b.totalAmount
           break
         case "date":
-          aValue = new Date(a.transactionDate || a.created_at)
-          bValue = new Date(b.transactionDate || b.created_at)
+          aValue = new Date(a.transactionDate || (a.createdAt ?? ''))
+          bValue = new Date(b.transactionDate || (b.createdAt ?? ''))
           break
         case "description":
           aValue = a.description?.toLowerCase() || ""
@@ -99,14 +100,14 @@ export function DashboardContent({  businessId,  }: DashboardClientProps) {
           bValue = b.item?.toLowerCase() || ""
           break
         default:
-          aValue = a.transactionDate || a.created_at
-          bValue = b.transactionDate || b.created_at
+          aValue = a.transactionDate || a.createdAt
+          bValue = b.transactionDate || b.createdAt
       }
 
       if (sortOrder === "asc") {
-        return aValue > bValue ? 1 : -1
+        return aValue ?? '' > bValue  ?  1 : -1
       } else {
-        return aValue < bValue ? 1 : -1
+        return aValue ?? '' < bValue ? 1 : -1 
       }
     })
   }, [transactions, searchTerm, sortBy, sortOrder])
@@ -126,12 +127,12 @@ export function DashboardContent({  businessId,  }: DashboardClientProps) {
     }).format(amount)
   }
 
-  const handleViewTransaction = (transaction: Transaction) => {
+  const handleViewTransaction = (transaction: FullTransactionWithItems) => {
     setSelectedTransaction(transaction)
     setIsViewModalOpen(true)
   }
 
-  const handleEditTransaction = (transaction: Transaction) => {
+  const handleEditTransaction = (transaction: FullTransactionWithItems) => {
     setSelectedTransaction(transaction)
     setIsEditModalOpen(true)
   }
@@ -147,12 +148,12 @@ export function DashboardContent({  businessId,  }: DashboardClientProps) {
 
   // Calculate metrics from real data
   const totalIncome = transactions
-    .filter((t: Transaction) => t.type === "income")
-    .reduce((sum: number, t: Transaction) => sum + Number(t.amount), 0)
+    .filter((t: FullTransactionWithItems) => t.transactionType === "sales")
+    .reduce((sum: number, t: FullTransactionWithItems) => sum + Number(t.totalAmount), 0)
 
   const totalExpenses = transactions
-    .filter((t: Transaction) => t.type === "expense")
-    .reduce((sum: number, t: Transaction) => sum + Number(t.amount), 0)
+    .filter((t: FullTransactionWithItems) => t.transactionType === "expense")
+    .reduce((sum: number, t: FullTransactionWithItems) => sum + Number(t.totalAmount), 0)
 
   //const netProfit = totalIncome - totalExpenses
 
@@ -342,28 +343,28 @@ export function DashboardContent({  businessId,  }: DashboardClientProps) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredAndSortedTransactions.map((transaction: Transaction) => (
+                    {filteredAndSortedTransactions.map((transaction: FullTransactionWithItems) => (
                       <TableRow key={transaction.id}>
                         <TableCell className="font-medium">{transaction.id}</TableCell>
                         <TableCell>
                           {transaction.transactionDate
                             ? new Date(transaction.transactionDate).toLocaleDateString()
-                            : new Date(transaction.created_at).toLocaleDateString()}
+                            : new Date(transaction.deletedAt ?? '').toLocaleDateString()}
                         </TableCell>
                         <TableCell>
                           <div>
                             <div className="font-medium">{transaction.item || "N/A"}</div>
-                            <div className="text-sm text-muted-foreground">{transaction.reference || ""}</div>
+                            <div className="text-sm text-muted-foreground">{transaction.referenceNumber || ""}</div>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={transaction.type === "income" ? "default" : transaction.type === "expense" ? "destructive" : "secondary"}>
-                            {transaction.type}
+                          <Badge variant={transaction.transactionType === "sales" ? "default" : transaction.transactionType === "expense" ? "destructive" : "secondary"}>
+                            {transaction.transactionType}
                           </Badge>
                         </TableCell>
-                        <TableCell className={transaction.type === "income" ? "text-green-600" : "text-red-600"}>
-                          {transaction.type === "income" ? "+" : "-"}
-                          {formatCurrency(Number(transaction.amount))}
+                        <TableCell className={transaction.transactionType === "sales" ? "text-green-600" : "text-red-600"}>
+                          {transaction.transactionType === "sales" ? "+" : "-"}
+                          {formatCurrency(Number(transaction.totalAmount))}
                         </TableCell>
                         <TableCell>
                           <Badge variant={transaction.transactionStatus === "completed" ? "default" : "outline"}>
@@ -401,7 +402,8 @@ export function DashboardContent({  businessId,  }: DashboardClientProps) {
       </div>
 
       {/* Modals */}
-      <AddTransactionModal  open={isAddModalOpen} onOpenChange={setIsAddModalOpen}  businessId={businessId!} />
+      <AddTransactionModal  open={isAddModalOpen} onOpenChange={setIsAddModalOpen}  businessId={businessId!} userId={userId} />
+      
 
      {selectedTransaction && (
   <>

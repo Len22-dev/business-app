@@ -10,31 +10,34 @@ import { expenses } from "./expenses-schema";
  const paymentMethodEnum = pgEnum('payment_method', ['cash', 'bank_transfer', 'card', 'cheque', 'mobile_money'])
 
  export const paymentStatusEnum = pgEnum('payment_status', [
-  'PENDING',
-  'COMPLETED',
-  'FAILED',
-  'CANCELLED',
-  'REFUNDED',
+  'pending',
+  'paid',
+  'failed',
+  'cancelled',
+  'refunded',
+  'part_payment'
 ]);
 
 export const sourceTypeEnum = pgEnum('source_type', [
-  'SALES',
-  'PURCHASE',
-  'EXPENSE',
+  'sales',
+  'purchase',
+  'expense',
+  'others'
 ]);
 
 export const payerTypeEnum = pgEnum('payer_type', [
-  'CUSTOMER',
-  'VENDOR',
-  'EMPLOYEE',
-  'COMPANY',
+  'customer',
+  'vendor',
+  'employee',
+  'company',
+  'others'
 ]);
 
 export const allocationTypeEnum = pgEnum('allocation_type', [
-  'INVOICE',
-  'ADVANCE',
-  'REFUND',
-  'ADJUSTMENT',
+  'invoice',
+  'advance',
+  'refund',
+  'adjustment',
 ]);
 
 const timestamps = {
@@ -62,7 +65,7 @@ export const payments = pgTable('payments', {
     checkNumber: varchar('check_number', { length: 50 }),
     cardLastFour: varchar('card_last_four', { length: 4 }),
     transactionId: varchar('transaction_id', { length: 100 }),
-    paymentStatus: paymentStatusEnum('payment_status').default('PENDING'),
+    paymentStatus: paymentStatusEnum('payment_status').default('pending'),
     approvedBy: uuid('approved_by'),
     approvedAt: timestamp('approved_at'),
     createdBy: uuid('created_by'),

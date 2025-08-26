@@ -187,7 +187,7 @@ export type TransactionType = "deposit" | "withdrawal" | "transfer" | "payment"
 export type CardType = "credit" | "debit"
 export type AccountType = "checking" | "savings" | "business" | "investment"
 export type PaymentMethod = "cash" | "bank_transfer" | "card"| "mobile_money" | "cheque"
-export type PaymentStatus = "pending" | 'paid' | 'part_payment' | "failed" | "refunded"
+export type PaymentStatus = "paid" | 'unpaid' | 'part_payment' | "failed" | "refunded" | "pending"
 export type SaleStatus = "draft" | "pending" | "part_payment" | "paid" | "overdue" | "cancelled"
 export type ExpenseStatus = "completed" | "pending" | "cancelled"
 // export type  

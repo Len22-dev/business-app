@@ -2,15 +2,16 @@ import { eq, desc } from 'drizzle-orm';
 import { db } from '../drizzle';
 import { taxRates } from '../schema/tax-schema';
 import { z } from 'zod';
+import { createTaxRateSchema } from '@/lib/zod/taxSchema';
 
-const createTaxRateSchema = z.object({
-  businessId: z.string().uuid(),
-  name: z.string().min(1),
-  rate: z.number().min(0),
-  type: z.string().min(1),
-  isDefault: z.boolean().optional(),
-  isActive: z.boolean().optional(),
-});
+// const createTaxRateSchema = z.object({
+  // businessId: z.string().uuid(),
+  // name: z.string().min(1),
+  // rate: z.number().min(0),
+  // type: z.string().min(1),
+  // isDefault: z.boolean().optional(),
+  // isActive: z.boolean().optional(),
+// });
 
 const updateTaxRateSchema = createTaxRateSchema.partial();
 

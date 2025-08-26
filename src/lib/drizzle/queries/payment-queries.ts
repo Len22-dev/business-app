@@ -1,28 +1,31 @@
 import { eq, and, sql, desc, gte, lte, ilike } from 'drizzle-orm';
 import { db } from '../drizzle';
-import { payments, invoices, customers, vendors } from '../schema/general';
+import { payments } from '../schema';
+import { invoices } from '../schema';
 import type { Payment, Invoice, Customer, Vendor } from '../types';
 import { z } from 'zod';
-import { uuidSchema, paginationSchema } from '../../zod/generalSchema';
+import { uuidSchema, paginationSchema } from '../../zod/businessSchema';
 import { DatabaseError, NotFoundError, ValidationError } from '@/lib/zod/errorSchema';
+import { createPaymentSchema, paymentSchema, updatePaymentSchema } from '@/lib/zod/paymentSchema';
+import { PaymentMethod, PaymentStatus } from '@/lib/types';
 
 // Payment schemas
-const createPaymentSchema = z.object({
-  businessId: uuidSchema,
-  invoiceId: uuidSchema.optional(),
-  customerId: uuidSchema.optional(),
-  vendorId: uuidSchema.optional(),
-  amount: z.number().positive(),
-  paymentDate: z.date().default(() => new Date()),
-  paymentMethod: z.string().max(50).optional(),
-  reference: z.string().max(100).optional(),
-  status: z.enum(['pending', 'completed', 'failed', 'refunded']).default('pending'),
-  notes: z.string().optional(),
-});
+// const createPaymentSchema = z.object({
+//   businessId: uuidSchema,
+//   invoiceId: uuidSchema.optional(),
+//   customerId: uuidSchema.optional(),
+//   vendorId: uuidSchema.optional(),
+//   amount: z.number().positive(),
+//   paymentDate: z.date().default(() => new Date()),
+//   paymentMethod: z.string().max(50).optional(),
+//   reference: z.string().max(100).optional(),
+//   status: z.enum(['pending', 'completed', 'failed', 'refunded']).default('pending'),
+//   notes: z.string().optional(),
+// });
 
-const updatePaymentSchema = createPaymentSchema.partial();
+// const updatePaymentSchema = createPaymentSchema.partial();
 
-type PaymentWithDetails = Payment & {
+type PaymentWithDetails = z.infer<typeof createPaymentSchema> & {
   invoice?: Invoice;
   customer?: Customer;
   vendor?: Vendor;
@@ -43,14 +46,10 @@ export const paymentQueries = {
   async getById(paymentId: string): Promise<PaymentWithDetails | null> {
     try {
       const validatedId = uuidSchema.parse(paymentId);
-      return await db.query.payments.findFirst({
+      const newPayments = await db.query.payments.findFirst({
         where: eq(payments.id, validatedId),
-        with: {
-          invoice: true,
-          customer: true,
-          vendor: true,
-        },
       });
+      return newPayments as PaymentWithDetails
     } catch (error) {
       if (error instanceof z.ZodError) {
         throw new ValidationError(`Invalid payment ID: ${error.errors[0].message}`);
@@ -63,7 +62,7 @@ export const paymentQueries = {
   async getByBusinessId(
     businessId: string,
     filters: PaymentFilters = {},
-    paginationData: z.infer<typeof paginationSchema> = { page: 1, limit: 10 }
+    paginationData: z.infer<typeof paginationSchema> = { page: 1, limit: 10, offset: 0 }
   ): Promise<{ payments: PaymentWithDetails[]; total: number }> {
     try {
       const validatedBusinessId = uuidSchema.parse(businessId);
@@ -78,19 +77,19 @@ export const paymentQueries = {
       }
 
       if (filters.status) {
-        whereConditions.push(eq(payments.status, filters.status as any));
+        whereConditions.push(eq(payments.paymentStatus, filters.status as PaymentStatus));
       }
 
       if (filters.paymentMethod) {
-        whereConditions.push(eq(payments.paymentMethod, filters.paymentMethod));
+        whereConditions.push(eq(payments.paymentMethod, filters.paymentMethod as PaymentMethod));
       }
 
       if (filters.customerId) {
-        whereConditions.push(eq(payments.customerId, filters.customerId));
+        whereConditions.push(eq(payments.sourceId, filters.customerId));
       }
 
       if (filters.vendorId) {
-        whereConditions.push(eq(payments.vendorId, filters.vendorId));
+        whereConditions.push(eq(payments.sourceId, filters.vendorId));
       }
 
       if (filters.startDate) {
@@ -114,11 +113,6 @@ export const paymentQueries = {
       // Get paginated results
       const result = await db.query.payments.findMany({
         where: whereClause,
-        with: {
-          invoice: true,
-          customer: true,
-          vendor: true,
-        },
         limit,
         offset,
         orderBy: [desc(payments.paymentDate)],
@@ -134,7 +128,7 @@ export const paymentQueries = {
   },
 
   // Create payment
-  async create(paymentData: z.infer<typeof createPaymentSchema>): Promise<Payment> {
+  async create(paymentData: z.infer<typeof createPaymentSchema>) {
     try {
       const validatedData = createPaymentSchema.parse(paymentData);
 
@@ -142,8 +136,8 @@ export const paymentQueries = {
         .insert(payments)
         .values({
           ...validatedData,
-          created_at: new Date(),
-          updated_at: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
         })
         .returning();
 
@@ -171,9 +165,8 @@ export const paymentQueries = {
           .insert(payments)
           .values({
             ...validatedData,
-            invoiceId: validatedInvoiceId,
-            created_at: new Date(),
-            updated_at: new Date(),
+            createdAt: new Date(),
+            updatedAt: new Date(),
           })
           .returning();
 
@@ -182,9 +175,9 @@ export const paymentQueries = {
           .update(invoices)
           .set({
             paidAmount: sql`${invoices.paidAmount} + ${payment.amount}`,
-            status: sql`CASE 
+            invoiceStatus: sql`CASE 
               WHEN ${invoices.paidAmount} + ${payment.amount} >= ${invoices.totalAmount} THEN 'paid'::invoice_status
-              ELSE ${invoices.status}
+              ELSE ${invoices.invoiceStatus}
             END`,
             updated_at: new Date(),
           })
@@ -211,7 +204,7 @@ export const paymentQueries = {
         .update(payments)
         .set({
           ...validatedData,
-          updated_at: new Date(),
+          updatedAt: new Date(),
         })
         .where(eq(payments.id, validatedId))
         .returning();
@@ -235,8 +228,8 @@ export const paymentQueries = {
       const [payment] = await db
         .update(payments)
         .set({
-          status: 'completed',
-          updated_at: new Date(),
+          paymentStatus: 'paid',
+          updatedAt: new Date(),
         })
         .where(eq(payments.id, validatedId))
         .returning();
@@ -260,9 +253,9 @@ export const paymentQueries = {
       const [payment] = await db
         .update(payments)
         .set({
-          status: 'failed',
+          paymentStatus: 'failed',
           notes: reason,
-          updated_at: new Date(),
+          updatedAt: new Date(),
         })
         .where(eq(payments.id, validatedId))
         .returning();
@@ -288,8 +281,8 @@ export const paymentQueries = {
         throw new NotFoundError('Payment not found');
       }
 
-      if (existingPayment.status !== 'completed') {
-        throw new ValidationError('Only completed payments can be refunded');
+      if (existingPayment.paymentStatus !== 'paid') {
+        throw new ValidationError('Only fully paid payments can be refunded');
       }
 
       const finalRefundAmount = refundAmount ?? existingPayment.amount;
@@ -303,26 +296,26 @@ export const paymentQueries = {
         const [payment] = await tx
           .update(payments)
           .set({
-            status: 'refunded',
+            paymentStatus: 'refunded',
             notes: reason,
-            updated_at: new Date(),
+            updatedAt: new Date(),
           })
           .where(eq(payments.id, validatedId))
           .returning();
 
         // If payment was for an invoice, update invoice paid amount
-        if (payment.invoiceId) {
+        if (payment.sourceType === "sales") {
           await tx
             .update(invoices)
             .set({
               paidAmount: sql`${invoices.paidAmount} - ${finalRefundAmount}`,
-              status: sql`CASE 
+              invoiceStatus: sql`CASE 
                 WHEN ${invoices.paidAmount} - ${finalRefundAmount} < ${invoices.totalAmount} THEN 'sent'::invoice_status
-                ELSE ${invoices.status}
+                ELSE ${invoices.invoiceStatus}
               END`,
               updated_at: new Date(),
             })
-            .where(eq(invoices.id, payment.invoiceId));
+            .where(eq(invoices.id, payment.sourceId));
         }
 
         return payment;
@@ -341,15 +334,12 @@ export const paymentQueries = {
     try {
       const validatedInvoiceId = uuidSchema.parse(invoiceId);
 
-      return await db.query.payments.findMany({
-        where: eq(payments.invoiceId, validatedInvoiceId),
-        with: {
-          invoice: true,
-          customer: true,
-          vendor: true,
-        },
+      const paymentWithInvoice = await db.query.payments.findMany({
+        where: eq(payments.sourceId, validatedInvoiceId),
         orderBy: [desc(payments.paymentDate)],
       });
+
+      return paymentWithInvoice
     } catch (error) {
       if (error instanceof z.ZodError) {
         throw new ValidationError(`Invalid invoice ID: ${error.errors[0].message}`);
@@ -361,7 +351,7 @@ export const paymentQueries = {
   // Get payments by customer
   async getByCustomerId(
     customerId: string,
-    paginationData: z.infer<typeof paginationSchema> = { page: 1, limit: 10 }
+    paginationData: z.infer<typeof paginationSchema> = { page: 1, limit: 10, offset:0 }
   ): Promise<{ payments: PaymentWithDetails[]; total: number }> {
     try {
       const validatedCustomerId = uuidSchema.parse(customerId);
@@ -372,18 +362,21 @@ export const paymentQueries = {
       const totalResult = await db
         .select({ count: sql<number>`COUNT(*)` })
         .from(payments)
-        .where(eq(payments.customerId, validatedCustomerId));
+        .where(and(
+          eq(payments.sourceId, validatedCustomerId),
+          eq(payments.sourceType, 'sales')
+        ));
 
       const total = Number(totalResult[0]?.count || 0);
 
       // Get paginated results
       const result = await db.query.payments.findMany({
-        where: eq(payments.customerId, validatedCustomerId),
-        with: {
-          invoice: true,
-          customer: true,
-          vendor: true,
-        },
+        where: eq(payments.sourceId, validatedCustomerId),
+        // with: {
+          // invoice: true,
+          // customer: true,
+          // vendor: true,
+        // },
         limit,
         offset,
         orderBy: [desc(payments.paymentDate)],
@@ -436,13 +429,13 @@ export const paymentQueries = {
         .select({
           totalPayments: sql<number>`COUNT(*)`,
           totalAmount: sql<number>`COALESCE(SUM(${payments.amount}), 0)`,
-          completedPayments: sql<number>`COUNT(CASE WHEN ${payments.status} = 'completed' THEN 1 END)`,
-          completedAmount: sql<number>`COALESCE(SUM(CASE WHEN ${payments.status} = 'completed' THEN ${payments.amount} ELSE 0 END), 0)`,
-          pendingPayments: sql<number>`COUNT(CASE WHEN ${payments.status} = 'pending' THEN 1 END)`,
-          pendingAmount: sql<number>`COALESCE(SUM(CASE WHEN ${payments.status} = 'pending' THEN ${payments.amount} ELSE 0 END), 0)`,
-          failedPayments: sql<number>`COUNT(CASE WHEN ${payments.status} = 'failed' THEN 1 END)`,
-          refundedPayments: sql<number>`COUNT(CASE WHEN ${payments.status} = 'refunded' THEN 1 END)`,
-          refundedAmount: sql<number>`COALESCE(SUM(CASE WHEN ${payments.status} = 'refunded' THEN ${payments.amount} ELSE 0 END), 0)`,
+          completedPayments: sql<number>`COUNT(CASE WHEN ${payments.paymentStatus} = 'completed' THEN 1 END)`,
+          completedAmount: sql<number>`COALESCE(SUM(CASE WHEN ${payments.paymentStatus} = 'completed' THEN ${payments.amount} ELSE 0 END), 0)`,
+          pendingPayments: sql<number>`COUNT(CASE WHEN ${payments.paymentStatus} = 'pending' THEN 1 END)`,
+          pendingAmount: sql<number>`COALESCE(SUM(CASE WHEN ${payments.paymentStatus} = 'pending' THEN ${payments.amount} ELSE 0 END), 0)`,
+          failedPayments: sql<number>`COUNT(CASE WHEN ${payments.paymentStatus} = 'failed' THEN 1 END)`,
+          refundedPayments: sql<number>`COUNT(CASE WHEN ${payments.paymentStatus} = 'refunded' THEN 1 END)`,
+          refundedAmount: sql<number>`COALESCE(SUM(CASE WHEN ${payments.paymentStatus} = 'refunded' THEN ${payments.amount} ELSE 0 END), 0)`,
         })
         .from(payments)
         .where(and(...whereConditions));
@@ -484,20 +477,21 @@ export const paymentQueries = {
   },
 
   // Get recent payments
-  async getRecent(businessId: string, limit: number = 10): Promise<PaymentWithDetails[]> {
+  async getRecent(businessId: string, limit: number = 10): Promise<z.infer<typeof paymentSchema>[]> {
     try {
       const validatedBusinessId = uuidSchema.parse(businessId);
 
-      return await db.query.payments.findMany({
+      const recentPayment = await db.query.payments.findMany({
         where: eq(payments.businessId, validatedBusinessId),
-        with: {
-          invoice: true,
-          customer: true,
-          vendor: true,
-        },
+        // with: {
+          // invoice: true,
+          // customer: true,
+          // vendor: true,
+        // },
         limit,
         orderBy: [desc(payments.paymentDate)],
       });
+      return recentPayment 
     } catch (error) {
       if (error instanceof z.ZodError) {
         throw new ValidationError(`Invalid business ID: ${error.errors[0].message}`);

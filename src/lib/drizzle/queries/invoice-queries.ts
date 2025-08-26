@@ -3,7 +3,7 @@ import { db } from '../drizzle';
 import { invoices, invoiceItems, } from '../schema/invoice-schema';
 import type { Invoice, InvoiceItem, Customer, Product, Sale, InvoiceStatus } from '../types';
 import { z } from 'zod';
-import { uuidSchema, paginationSchema } from '../../zod/generalSchema';
+import { uuidSchema, paginationSchema } from '../../zod/businessSchema';
 import { DatabaseError, NotFoundError, ValidationError } from '@/lib/zod/errorSchema';
 
 // Invoice schemas
@@ -82,7 +82,7 @@ export const invoiceQueries = {
   async getByBusinessId(
     businessId: string,
     filters: InvoiceFilters = {},
-    paginationData: z.infer<typeof paginationSchema> = { page: 1, limit: 10 }
+    paginationData: z.infer<typeof paginationSchema> = { page: 1, limit: 10, offset: 0 },
   ): Promise<{ invoices: InvoiceWithDetails[]; total: number }> {
     try {
       const validatedBusinessId = uuidSchema.parse(businessId);
@@ -115,9 +115,9 @@ export const invoiceQueries = {
       if (filters.overdue) {
         whereConditions.push(
           and(
-            eq(invoices.invoiceStatus, 'paid'),
+            eq(invoices.invoiceStatus, 'overdue' as InvoiceStatus),
+            gte(invoices.dueDate, new Date()),
           ),
-            lte(invoices.dueDate, new Date()),
         );
       }
 
@@ -443,7 +443,7 @@ export const invoiceQueries = {
   // Get invoices by customer
   async getByCustomerId(
     customerId: string,
-    paginationData: z.infer<typeof paginationSchema> = { page: 1, limit: 10 }
+    paginationData: z.infer<typeof paginationSchema> = { page: 1, limit: 10, offset:0 }
   ): Promise<{ invoices: InvoiceWithDetails[]; total: number }> {
     try {
       const validatedCustomerId = uuidSchema.parse(customerId);

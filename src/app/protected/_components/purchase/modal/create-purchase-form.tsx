@@ -19,6 +19,7 @@ import { Form } from "@/components/ui/form"
 import { TextField } from "@/components/formFields"
 import { SelectField } from "@/components/formComponents/selectFields"
 import { DateField } from "@/components/formComponents/dateField"
+import { z } from "zod"
 
 interface CreatePurchaseModalProps {
   businessId: string
@@ -26,29 +27,20 @@ interface CreatePurchaseModalProps {
   onOpenChange: (open: boolean) => void
 }
 
-interface PurchaseFormData {
-  businessId: string
-  vendorId?: string
-  locationId?: string
-  createdBy?: string
-  purchaseDate: Date
-  total: number
-  subtotal: number
-  tax: number
-  discount: number
-  status: 'paid' | 'pending'
-}
-
 const statusOptions = [
-  { value: 'paid', label: 'Paid' },
-  { value: 'pending', label: 'Pending' },
+  { value: 'PAID', label: 'Paid' },
+  { value: 'PENDING', label: 'Pending' },
+  { value: 'PARTIAL_PAID', label: 'Part Payment' },
+  { value: 'DRAFT', label: 'Draft' },
+  { value: 'OVERDUE', label: 'Overdue' },
+  { value: 'CANCELLED', label: 'Cancelled' },
 ]
 
 export function CreatePurchaseModal({ open, onOpenChange, businessId }: CreatePurchaseModalProps) {
   const { mutate: createPurchase, isPending } = useCreatePurchase()
   const { toast } = useToast()
 
-  const form = useForm<PurchaseFormData>({
+  const form = useForm<z.infer <typeof createPurchaseSchema>>({
     resolver: zodResolver(createPurchaseSchema),
     defaultValues: {
       businessId: businessId,
@@ -56,11 +48,11 @@ export function CreatePurchaseModal({ open, onOpenChange, businessId }: CreatePu
       locationId: "",
       createdBy: "",
       purchaseDate: new Date(),
-      total: 0,
+      totalAmount: 0,
       subtotal: 0,
-      tax: 0,
+      taxAmount: 0,
       discount: 0,
-      status: "pending",
+      purchaseStatus: "PENDING",
     },
   })
 
@@ -73,11 +65,11 @@ export function CreatePurchaseModal({ open, onOpenChange, businessId }: CreatePu
         locationId: "",
         createdBy: "",
         purchaseDate: new Date(),
-        total: 0,
+        totalAmount: 0,
         subtotal: 0,
-        tax: 0,
+        taxAmount: 0,
         discount: 0,
-        status: "pending",
+        purchaseStatus: "pending",
       })
     }   
   }, [open, businessId, form])
@@ -85,18 +77,18 @@ export function CreatePurchaseModal({ open, onOpenChange, businessId }: CreatePu
   // Calculate total when subtotal, tax, or discount changes
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
-      if (name === 'subtotal' || name === 'tax' || name === 'discount') {
+      if (name === 'subtotal' || name === 'taxAmount' || name === 'discount') {
         const subtotal = value.subtotal || 0
-        const tax = value.tax || 0
+        const tax = value.taxAmount || 0
         const discount = value.discount || 0
         const total = subtotal + tax - discount
-        form.setValue('total', total, { shouldValidate: true })
+        form.setValue('totalAmount', total, { shouldValidate: true })
       }
     })
     return () => subscription.unsubscribe()
   }, [form])
 
-  const handleSubmit = (data: PurchaseFormData) => {
+  const handleSubmit = (data: z.infer<typeof createPurchaseSchema>) => {
     createPurchase({
       purchaseData: {
         businessId: data.businessId,
@@ -104,19 +96,19 @@ export function CreatePurchaseModal({ open, onOpenChange, businessId }: CreatePu
         locationId: data.locationId || undefined,
         createdBy: data.createdBy || undefined,
         purchaseDate: data.purchaseDate,
-        total: data.total,
+        totalAmount: data.totalAmount,
         subtotal: data.subtotal,
-        tax: data.tax,
+        taxAmount: data.taxAmount,
         discount: data.discount,
-        status: data.status,
+        purchaseStatus: data.purchaseStatus,
       },
       items: [], // Items will be added separately
       businessId: data.businessId
     }, {
-      onSuccess: (data) => {
+      onSuccess: () => {
         toast({
           title: "Purchase created successfully!",
-          description: `Purchase of ₦${form.getValues('total').toLocaleString()} has been recorded.`,
+          description: `Purchase of ₦${form.getValues('totalAmount').toLocaleString()} has been recorded.`,
           variant: "default",
         })
         form.reset()
@@ -181,7 +173,7 @@ export function CreatePurchaseModal({ open, onOpenChange, businessId }: CreatePu
               <div className="space-y-2">
                 <TextField
                   control={form.control}
-                  name="tax"
+                  name="taxAmount"
                   type="number"
                   label="Tax"
                   placeholder="0.00"
@@ -206,7 +198,7 @@ export function CreatePurchaseModal({ open, onOpenChange, businessId }: CreatePu
               <div className="space-y-2">
                 <TextField
                   control={form.control}
-                  name="total"
+                  name="totalAmount"
                   type="number"
                   label="Total"
                   placeholder="0.00"
@@ -220,7 +212,7 @@ export function CreatePurchaseModal({ open, onOpenChange, businessId }: CreatePu
               <div className="space-y-2">
                 <SelectField
                   control={form.control}
-                  name="status"
+                  name="purchaseStatus"
                   label="Status"
                   placeholder="Select status"
                   options={statusOptions}

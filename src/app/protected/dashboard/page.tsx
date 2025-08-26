@@ -4,7 +4,7 @@ import { DashboardContent } from "../_components/dashboardPage"
 
 
 export default async function DashboardPage() {
-  const {user, business} = await AuthChecker('admin')
+  const {user, business} = await AuthChecker('owner', )
   const userId = user.id
   const businessId = business?.business_id
   

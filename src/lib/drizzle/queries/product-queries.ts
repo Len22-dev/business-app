@@ -4,7 +4,7 @@ import { products } from '../schema';
 import type { Product, Category } from '../types';
 import { z } from 'zod';
 import { createProductSchema, updateProductSchema } from '../../zod/productSchema';
-import { uuidSchema, paginationSchema } from '../../zod/userSchema';
+import { uuidSchema, paginationSchema } from '@/lib/zod/businessSchema';
 import { DatabaseError, NotFoundError, ValidationError } from '@/lib/zod/errorSchema';
 
 // Extended type for product with category

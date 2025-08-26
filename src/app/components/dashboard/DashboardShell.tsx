@@ -9,9 +9,10 @@ import { TopNav } from "./TopNav"
 
 interface DashboardShellProps {
   children: React.ReactNode
+  userId: string
 }
 
-export function DashboardShell({ children }: DashboardShellProps) {
+export function DashboardShell({ children, userId }: DashboardShellProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const pathname = usePathname()
@@ -100,6 +101,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
           isSidebarOpen={isSidebarOpen}
           onSidebarToggle={handleSidebarToggle}
           onMobileMenuToggle={handleMobileMenuToggle}
+          userId={userId}
         />
         <main className="flex-1 overflow-auto">
             <div className="p-6">

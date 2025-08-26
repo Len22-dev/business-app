@@ -2,15 +2,16 @@ import { eq, desc } from 'drizzle-orm';
 import { db } from '../drizzle';
 import { users } from '../schema/users-schema';
 import { z } from 'zod';
+import { createUserSchema } from '@/lib/zod/userSchema';
 
-const createUserSchema = z.object({
-  email: z.string().email(),
-  fullName: z.string().min(1),
-  phoneNumber: z.string().optional(),
-  avatar: z.string().optional(),
-  isActive: z.boolean().optional(),
-  emailVerified: z.boolean().optional(),
-});
+// const createUserSchema = z.object({
+  // email: z.string().email(),
+  // fullName: z.string().min(1),
+  // phoneNumber: z.string().optional(),
+  // avatar: z.string().optional(),
+  // isActive: z.boolean().optional(),
+  // emailVerified: z.boolean().optional(),
+// });
 
 const updateUserSchema = createUserSchema.partial();
 

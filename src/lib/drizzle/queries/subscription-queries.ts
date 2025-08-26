@@ -1,24 +1,25 @@
 import { eq, and, desc,  lte, count } from 'drizzle-orm';
 import { db } from '../drizzle';
-import { subscriptions } from '../schema/general';
+import { subscriptionPlans, subscriptions } from '../schema/subscriptions-schema';
 import type { Subscription, Business, SubscriptionStatus } from '../types';
 import { z } from 'zod';
-import { uuidSchema, paginationSchema } from '../../zod/generalSchema';
+import { uuidSchema, paginationSchema } from '../../zod/businessSchema';
 import { DatabaseError, NotFoundError, ValidationError } from '@/lib/zod/errorSchema';
+import { createSubscriptionSchema } from '@/lib/zod/subscriptionSchema';
 
 // Subscription schemas
-const createSubscriptionSchema = z.object({
-  businessId: uuidSchema,
-  planName: z.string().min(1).max(50),
-  status: z.enum(['active', 'inactive', 'cancelled', 'past_due', 'trialing']).default('trialing'),
-  currentPeriodStart: z.date(),
-  currentPeriodEnd: z.date(),
-  trialEnd: z.date().optional(),
-  amount: z.number().positive().optional(),
-  currency: z.string().length(3).default('USD'),
-  stripeSubscriptionId: z.string().optional(),
-  metadata: z.record(z.unknown()).optional(),
-});
+// const createSubscriptionSchema = z.object({
+  // businessId: uuidSchema,
+  // planName: z.string().min(1).max(50),
+  // status: z.enum(['active', 'inactive', 'cancelled', 'past_due', 'trialing']).default('trialing'),
+  // currentPeriodStart: z.date(),
+  // currentPeriodEnd: z.date(),
+  // trialEnd: z.date().optional(),
+  // amount: z.number().positive().optional(),
+  // currency: z.string().length(3).default('USD'),
+  // stripeSubscriptionId: z.string().optional(),
+  // metadata: z.record(z.unknown()).optional(),
+// });
 
 const updateSubscriptionSchema = createSubscriptionSchema.partial();
 
@@ -74,7 +75,7 @@ export const subscriptionQueries = {
   // Get all subscriptions with filters
   async getAll(
     filters: SubscriptionFilters = {},
-    paginationData: z.infer<typeof paginationSchema> = { page: 1, limit: 10 }
+    paginationData: z.infer<typeof paginationSchema> = { page: 1, limit: 10, offset: 0 }
   ): Promise<{ subscriptions: SubscriptionWithBusiness[]; total: number }> {
     try {
       const { page = 1, limit = 10 } = paginationSchema.parse(paginationData);
@@ -87,7 +88,7 @@ export const subscriptionQueries = {
       }
 
       if (filters.planName) {
-        whereConditions.push(eq(subscriptions.planName, filters.planName));
+        whereConditions.push(eq(subscriptionPlans.name, filters.planName));
       }
 
       const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
@@ -253,7 +254,7 @@ export const subscriptionQueries = {
       const offset = (page - 1) * limit;
       const whereConditions = [eq(subscriptions.businessId, businessId)];
       if (status) whereConditions.push(eq(subscriptions.status, status as SubscriptionStatus));
-      if (plan) whereConditions.push(eq(subscriptions.planName, plan));
+      if (plan) whereConditions.push(eq(subscriptionPlans.name, plan));
       // Get total count
       const totalResult = await db
         .select({ count: count(subscriptions.id) })

@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Vendor } from '@/lib/drizzle/types';
+import { z } from 'zod';
+import { vendorWithContactSchema } from '@/lib/zod/vendorSchema';
 
 const vendorApi = {
   getById: async (vendorId: string): Promise<Vendor> => {
@@ -39,7 +41,7 @@ const vendorApi = {
   },
 
   create: async (data: { 
-    vendorData: Partial<Vendor>; 
+    vendorData: Partial<z.infer<typeof vendorWithContactSchema>>; 
     businessId: string;
   }) => {
     const response = await fetch('/api/vendors', {

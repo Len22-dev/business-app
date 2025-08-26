@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Transaction } from '@/lib/drizzle/types';
+import {  TransactionFormData } from '@/lib/zod/transactionSchema';
 
 const transactionApi = {
   getById: async (transactionId: string): Promise<Transaction> => {
@@ -39,8 +40,9 @@ const transactionApi = {
     return response.json();
   },
 
-  create: async (data: { 
-    transactionData: Partial<Transaction>; 
+  
+  create: async (data: {
+    transactionData: Partial<TransactionFormData>; 
     businessId: string 
   }) => {
     const response = await fetch('/api/transactions', {

@@ -24,6 +24,16 @@ export const inventoryApi = {
 
     return response.json()
   },
+  getProducts: async ({  businessId }: {  businessId: string }) => {
+    const response = await fetch(`/api/general/products?businessId=${businessId}`)
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to fetch products')
+    }
+
+    return response.json()
+  },
 
   getBanks: async ({  businessId }: {  businessId: string }) => {
     const response = await fetch(`/api/general/banks?businessId=${businessId}`)
@@ -63,6 +73,15 @@ export const useCustomer = ( businessId: string) => {
   return useQuery({
     queryKey: inventoryKeys.list({ businessId }),
     queryFn: () => inventoryApi.getCustomer({  businessId }),
+    enabled: !!businessId, // Only run if we have required params
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  })
+}
+export const useProducts = ( businessId: string) => {
+  return useQuery({
+    queryKey: inventoryKeys.list({ businessId }),
+    queryFn: () => inventoryApi.getProducts({  businessId }),
     enabled: !!businessId, // Only run if we have required params
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes

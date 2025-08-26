@@ -4,8 +4,15 @@ import { AuthChecker } from '@/hooks/userCherker'
 import { createClient } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
+
   try {
     const {user} = await AuthChecker()
+    if(!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
 
     // Get userId from query params
     const { searchParams } = new URL(request.url)

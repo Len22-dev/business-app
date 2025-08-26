@@ -35,9 +35,9 @@ import { documents } from "./documents-schema";
 import { exchangeRates } from "./currency-schema";
 import { currencies } from "./currency-schema";
 import { userRoleEnum, users } from "./users-schema";
-import { sql } from "drizzle-orm";
-import { pgPolicy } from "drizzle-orm/pg-core";
-import { authenticatedRole} from "drizzle-orm/supabase";
+// import { sql } from "drizzle-orm";
+// import { pgPolicy } from "drizzle-orm/pg-core";
+// import { authenticatedRole} from "drizzle-orm/supabase";
 
 const timestamps = {
   updated_at: timestamp(),
@@ -104,194 +104,194 @@ export const locations = pgTable('locations', {
 
 
 
-// RLS Policies for Businesses Table
-export const businessesSelectPolicy = pgPolicy("users can select businesses they belong to", {
-  for: "select",
-  to: authenticatedRole,
-  using: sql`
-    EXISTS (
-      SELECT 1 FROM business_users bu 
-      WHERE bu.business_id = businesses.id 
-      AND bu.user_id = auth.uid() 
-      AND bu.is_active = true
-    )
-  `,
-}).link(businesses);
+// // RLS Policies for Businesses Table
+// export const businessesSelectPolicy = pgPolicy("users can select businesses they belong to", {
+//   for: "select",
+//   to: authenticatedRole,
+//   using: sql`
+//     EXISTS (
+//       SELECT 1 FROM business_users bu 
+//       WHERE bu.business_id = businesses.id 
+//       AND bu.user_id = auth.uid() 
+//       AND bu.is_active = true
+//     )
+//   `,
+// }).link(businesses);
 
-export const businessesInsertPolicy = pgPolicy("users can insert businesses", {
-  for: "insert",
-  to: authenticatedRole,
-  using: sql`auth.uid() IS NOT NULL`,
-}).link(businesses);
+// export const businessesInsertPolicy = pgPolicy("users can insert businesses", {
+//   for: "insert",
+//   to: authenticatedRole,
+//   using: sql`auth.uid() IS NOT NULL`,
+// }).link(businesses);
 
-export const businessesUpdatePolicy = pgPolicy("users can update businesses they own or admin", {
-  for: "update",
-  to: authenticatedRole,
-  using: sql`
-    EXISTS (
-      SELECT 1 FROM business_users bu 
-      WHERE bu.business_id = businesses.id 
-      AND bu.user_id = auth.uid() 
-      AND bu.role IN ('owner', 'admin') 
-      AND bu.is_active = true
-    )
-  `,
-}).link(businesses);
+// export const businessesUpdatePolicy = pgPolicy("users can update businesses they own or admin", {
+//   for: "update",
+//   to: authenticatedRole,
+//   using: sql`
+//     EXISTS (
+//       SELECT 1 FROM business_users bu 
+//       WHERE bu.business_id = businesses.id 
+//       AND bu.user_id = auth.uid() 
+//       AND bu.role IN ('owner', 'admin') 
+//       AND bu.is_active = true
+//     )
+//   `,
+// }).link(businesses);
 
-export const businessesDeletePolicy = pgPolicy("only business owners can delete businesses", {
-  for: "delete",
-  to: authenticatedRole,
-  using: sql`
-    EXISTS (
-      SELECT 1 FROM business_users bu 
-      WHERE bu.business_id = businesses.id 
-      AND bu.user_id = auth.uid() 
-      AND bu.role = 'owner' 
-      AND bu.is_active = true
-    )
-  `,
-}).link(businesses);
+// export const businessesDeletePolicy = pgPolicy("only business owners can delete businesses", {
+//   for: "delete",
+//   to: authenticatedRole,
+//   using: sql`
+//     EXISTS (
+//       SELECT 1 FROM business_users bu 
+//       WHERE bu.business_id = businesses.id 
+//       AND bu.user_id = auth.uid() 
+//       AND bu.role = 'owner' 
+//       AND bu.is_active = true
+//     )
+//   `,
+// }).link(businesses);
 
-// RLS Policies for Business Users Table
-export const businessUsersSelectPolicy = pgPolicy("users can select business_users for their businesses", {
-  for: "select",
-  to: authenticatedRole,
-  using: sql`
-    EXISTS (
-      SELECT 1 FROM business_users bu 
-      WHERE bu.business_id = business_users.business_id 
-      AND bu.user_id = auth.uid() 
-      AND bu.is_active = true
-    )
-  `,
-}).link(businessUsers);
+// // RLS Policies for Business Users Table
+// export const businessUsersSelectPolicy = pgPolicy("users can select business_users for their businesses", {
+//   for: "select",
+//   to: authenticatedRole,
+//   using: sql`
+//     EXISTS (
+//       SELECT 1 FROM business_users bu 
+//       WHERE bu.business_id = business_users.business_id 
+//       AND bu.user_id = auth.uid() 
+//       AND bu.is_active = true
+//     )
+//   `,
+// }).link(businessUsers);
 
-export const businessUsersInsertPolicy = pgPolicy("owners and admin can invite users", {
-  for: "insert",
-  to: authenticatedRole,
-  using: sql`
-    EXISTS (
-      SELECT 1 FROM business_users bu 
-      WHERE bu.business_id = business_users.business_id 
-      AND bu.user_id = auth.uid() 
-      AND bu.role IN ('owner', 'admin') 
-      AND bu.is_active = true
-    )
-  `,
-}).link(businessUsers);
+// export const businessUsersInsertPolicy = pgPolicy("owners and admin can invite users", {
+//   for: "insert",
+//   to: authenticatedRole,
+//   using: sql`
+//     EXISTS (
+//       SELECT 1 FROM business_users bu 
+//       WHERE bu.business_id = business_users.business_id 
+//       AND bu.user_id = auth.uid() 
+//       AND bu.role IN ('owner', 'admin') 
+//       AND bu.is_active = true
+//     )
+//   `,
+// }).link(businessUsers);
 
-export const businessUsersUpdatePolicy = pgPolicy("owners and admins can update business users", {
-  for: "update",
-  to: authenticatedRole,
-  using: sql`
-    EXISTS (
-      SELECT 1 FROM business_users bu 
-      WHERE bu.business_id = business_users.business_id 
-      AND bu.user_id = auth.uid() 
-      AND bu.role IN ('owner', 'admin') 
-      AND bu.is_active = true
-    )
-    OR business_users.user_id = auth.uid() -- Users can update their own record
-  `,
-}).link(businessUsers);
+// export const businessUsersUpdatePolicy = pgPolicy("owners and admins can update business users", {
+//   for: "update",
+//   to: authenticatedRole,
+//   using: sql`
+//     EXISTS (
+//       SELECT 1 FROM business_users bu 
+//       WHERE bu.business_id = business_users.business_id 
+//       AND bu.user_id = auth.uid() 
+//       AND bu.role IN ('owner', 'admin') 
+//       AND bu.is_active = true
+//     )
+//     OR business_users.user_id = auth.uid() -- Users can update their own record
+//   `,
+// }).link(businessUsers);
 
-export const businessUsersDeletePolicy = pgPolicy("owners and admin can delete users", {
-  for: "delete",
-  to: authenticatedRole,
-  using: sql`
-    EXISTS (
-      SELECT 1 FROM business_users bu 
-      WHERE bu.business_id = business_users.business_id 
-      AND bu.user_id = auth.uid() 
-      AND bu.role IN ('owner', 'admin') 
-      AND bu.is_active = true
-    )
-    OR business_users.user_id = auth.uid() -- Users can remove themselves
-  `,
-}).link(businessUsers);
+// export const businessUsersDeletePolicy = pgPolicy("owners and admin can delete users", {
+//   for: "delete",
+//   to: authenticatedRole,
+//   using: sql`
+//     EXISTS (
+//       SELECT 1 FROM business_users bu 
+//       WHERE bu.business_id = business_users.business_id 
+//       AND bu.user_id = auth.uid() 
+//       AND bu.role IN ('owner', 'admin') 
+//       AND bu.is_active = true
+//     )
+//     OR business_users.user_id = auth.uid() -- Users can remove themselves
+//   `,
+// }).link(businessUsers);
 
 // RLS Policies for Locations Table
-export const locationsSelectPolicy = pgPolicy("users can select locations of their businesses", {
-  for: "select",
-  to: authenticatedRole,
-  using: sql`
-    EXISTS (
-      SELECT 1 FROM business_users bu 
-      WHERE bu.business_id = locations.business_id 
-      AND bu.user_id = auth.uid() 
-      AND bu.is_active = true
-    )
-  `,
-}).link(locations);
+// export const locationsSelectPolicy = pgPolicy("users can select locations of their businesses", {
+//   for: "select",
+//   to: authenticatedRole,
+//   using: sql`
+//     EXISTS (
+//       SELECT 1 FROM business_users bu 
+//       WHERE bu.business_id = locations.business_id 
+//       AND bu.user_id = auth.uid() 
+//       AND bu.is_active = true
+//     )
+//   `,
+// }).link(locations);
 
-export const locationsInsertPolicy = pgPolicy("owners and admins can create locations", {
-  for: "insert",
-  to: authenticatedRole,
-  using: sql`
-    EXISTS (
-      SELECT 1 FROM business_users bu 
-      WHERE bu.business_id = locations.business_id 
-      AND bu.user_id = auth.uid() 
-      AND bu.role IN ('owner', 'admin') 
-      AND bu.is_active = true
-    )
-  `,
-}).link(locations);
+// export const locationsInsertPolicy = pgPolicy("owners and admins can create locations", {
+//   for: "insert",
+//   to: authenticatedRole,
+//   using: sql`
+//     EXISTS (
+//       SELECT 1 FROM business_users bu 
+//       WHERE bu.business_id = locations.business_id 
+//       AND bu.user_id = auth.uid() 
+//       AND bu.role IN ('owner', 'admin') 
+//       AND bu.is_active = true
+//     )
+//   `,
+// }).link(locations);
 
-export const locationsUpdatePolicy = pgPolicy("owners, admins, and managers can update locations", {
-  for: "update",
-  to: authenticatedRole,
-  using: sql`
-    EXISTS (
-      SELECT 1 FROM business_users bu 
-      WHERE bu.business_id = locations.business_id 
-      AND bu.user_id = auth.uid() 
-      AND bu.role IN ('owner', 'admin', 'manager') 
-      AND bu.is_active = true
-    )
-    OR EXISTS (
-      SELECT 1 FROM employees e
-      WHERE e.id = locations.manager_id
-      AND e.user_id = auth.uid()
-    ) -- Location managers can update their own locations
-  `,
-}).link(locations);
+// export const locationsUpdatePolicy = pgPolicy("owners, admins, and managers can update locations", {
+//   for: "update",
+//   to: authenticatedRole,
+//   using: sql`
+//     EXISTS (
+//       SELECT 1 FROM business_users bu 
+//       WHERE bu.business_id = locations.business_id 
+//       AND bu.user_id = auth.uid() 
+//       AND bu.role IN ('owner', 'admin', 'manager') 
+//       AND bu.is_active = true
+//     )
+//     OR EXISTS (
+//       SELECT 1 FROM employees e
+//       WHERE e.id = locations.manager_id
+//       AND e.user_id = auth.uid()
+//     ) -- Location managers can update their own locations
+//   `,
+// }).link(locations);
 
-export const locationsDeletePolicy = pgPolicy("only owners and admins can delete locations", {
-  for: "delete",
-  to: authenticatedRole,
-  using: sql`
-    EXISTS (
-      SELECT 1 FROM business_users bu 
-      WHERE bu.business_id = locations.business_id 
-      AND bu.user_id = auth.uid() 
-      AND bu.role IN ('owner', 'admin') 
-      AND bu.is_active = true
-    )
-  `,
-}).link(locations);
+// export const locationsDeletePolicy = pgPolicy("only owners and admins can delete locations", {
+//   for: "delete",
+//   to: authenticatedRole,
+//   using: sql`
+//     EXISTS (
+//       SELECT 1 FROM business_users bu 
+//       WHERE bu.business_id = locations.business_id 
+//       AND bu.user_id = auth.uid() 
+//       AND bu.role IN ('owner', 'admin') 
+//       AND bu.is_active = true
+//     )
+//   `,
+// }).link(locations);
 
-// Additional helper policies for common scenarios
+// // Additional helper policies for common scenarios
 
-// Policy to allow users to see businesses they've been invited to (but not yet joined)
-export const businessesInvitedSelectPolicy = pgPolicy("users can see businesses they're invited to", {
-  for: "select",
-  to: authenticatedRole,
-  using: sql`
-    EXISTS (
-      SELECT 1 FROM business_users bu 
-      WHERE bu.business_id = businesses.id 
-      AND bu.user_id = auth.uid() 
-      AND bu.invited_at IS NOT NULL 
-      AND bu.joined_at IS NULL
-    )
-  `,
-}).link(businesses);
+// // Policy to allow users to see businesses they've been invited to (but not yet joined)
+// export const businessesInvitedSelectPolicy = pgPolicy("users can see businesses they're invited to", {
+//   for: "select",
+//   to: authenticatedRole,
+//   using: sql`
+//     EXISTS (
+//       SELECT 1 FROM business_users bu 
+//       WHERE bu.business_id = businesses.id 
+//       AND bu.user_id = auth.uid() 
+//       AND bu.invited_at IS NOT NULL 
+//       AND bu.joined_at IS NULL
+//     )
+//   `,
+// }).link(businesses);
 
-// Enable RLS on all tables
-export const enableBusinessesRLS = sql`ALTER TABLE businesses ENABLE ROW LEVEL SECURITY;`;
-export const enableBusinessUsersRLS = sql`ALTER TABLE business_users ENABLE ROW LEVEL SECURITY;`;
-export const enableLocationsRLS = sql`ALTER TABLE locations ENABLE ROW LEVEL SECURITY;`;
+// // Enable RLS on all tables
+// export const enableBusinessesRLS = sql`ALTER TABLE businesses ENABLE ROW LEVEL SECURITY;`;
+// export const enableBusinessUsersRLS = sql`ALTER TABLE business_users ENABLE ROW LEVEL SECURITY;`;
+// export const enableLocationsRLS = sql`ALTER TABLE locations ENABLE ROW LEVEL SECURITY;`;
 
 
 

@@ -4,42 +4,14 @@ import { purchases, purchaseItems } from '../schema/purchase-schema';
 import {  products } from '../schema/products-schema';
 import type { Purchase, PurchaseItem, Vendor, Product } from '../types';
 import { z } from 'zod';
-import { uuidSchema, paginationSchema } from '../../zod/generalSchema';
+import { uuidSchema, paginationSchema } from '@/lib/zod/businessSchema';
 import { DatabaseError, NotFoundError, ValidationError } from '@/lib/zod/errorSchema';
 import { inventory, journalEntries, ledgerEntries, stockMovements, transactions } from '../schema';
+import { createPurchaseItemSchema, createPurchaseSchema } from '@/lib/zod/purchaseSchema';
 
-// interface PurchaseStatus{
-//   pending: 'pending';
-//   completed: 'completed';
-//   cancelled: 'cancelled';
-//   returned: 'returned';
-// }
-//Purchase schemas
-const createPurchaseSchema = z.object({
-  businessId: uuidSchema,
-  vendorId: uuidSchema.optional(),
-  purchaseNumber: z.string().min(1).max(50),
-  locationId: uuidSchema.optional(),
-  createdBy: uuidSchema.optional(),
-  purchaseDate: z.date().default(() => new Date()),
-  dueDate: z.date().optional(),
-  subtotal: z.number().positive(),
-  taxAmount: z.number().min(0).default(0),
-  totalAmount: z.number().positive(),
-  paidAmount: z.number().min(0).default(0),
-  status: z.enum(['pending', 'completed', 'cancelled']).default('pending'),
-  notes: z.string().optional(),
-});
 
 const updatePurchaseSchema = createPurchaseSchema.partial();
 
-const createPurchaseItemSchema = z.object({
-  purchaseId: uuidSchema,
-  productId: uuidSchema,
-  quantity: z.number().int().positive(),
-  unitPrice: z.number().positive(),
-  totalPrice: z.number().positive(),
-});
 
 type PurchaseWithDetails = Purchase & {
   vendor?: Vendor;
@@ -85,7 +57,7 @@ export const purchaseQueries = {
   async getByBusinessId(
     businessId: string,
     filters: PurchaseFilters = {},
-    paginationData: z.infer<typeof paginationSchema> = { page: 1, limit: 10 }
+    paginationData: z.infer<typeof paginationSchema> = { page: 1, limit: 10, offset:0 }
   ): Promise<{ purchases: PurchaseWithDetails[]; total: number }> {
     try {
       const validatedBusinessId = uuidSchema.parse(businessId);
@@ -203,20 +175,7 @@ export const purchaseQueries = {
 
         // For each purchase item, create stock movement and update inventory
         for (const item of validatedItems) {
-          // Create stock movement (in)
-          await tx.insert(stockMovements).values({
-            productId: item.productId,
-            locationId: validatedPurchaseData.locationId, // ensure locationId is in purchaseData
-            movementType: 'in',
-            status: purchase.purchaseStatus === 'completed' ? 'Confirmed' : 'Pending',
-            confirmedQuantity: item.quantity,
-            unitCost: item.unitPrice,
-            totalCost: item.totalPrice,
-            referenceId: purchase.id,
-            referenceType: 'purchase',
-            notes: 'Purchase stock movement',
-            createdAt: new Date(),
-          });
+         
           // Update inventory (increment onHandQuantity)
           const inventoryRecord = await tx.query.inventory.findFirst({
             where: and(
@@ -232,19 +191,39 @@ export const purchaseQueries = {
               })
               .where(eq(inventory.id, inventoryRecord.id));
           }
+          // Create stock movement (in)
+           await tx.insert(stockMovements).values({
+             businessId: purchase.businessId ?? '',
+             inventoryId: inventoryRecord?.id ?? '',
+             productId: item.productId ?? '',
+             locationId: validatedPurchaseData.locationId ?? '', // ensure locationId is in purchaseData
+             movementType: 'in',
+             status: purchase.purchaseStatus === 'completed' ? 'Confirmed' : 'Pending',
+             confirmedQuantity: item.quantity,
+             unitCost: item.unitCost,
+             totalCost: item.totalCost,
+             referenceId: purchase.id,
+             referenceDocumentId: '',
+             referenceType: 'purchase',
+             notes: 'Purchase stock movement',
+             createdAt: new Date(),
+           });
         }
+
 
         // If purchase is completed, create transaction and ledger entries
         if (purchase.purchaseStatus === 'completed') {
           // Insert transaction record
           await tx.insert(transactions).values({
-            businessId: purchase.businessId,
-            item: `Purchase #${purchase.purchaseNumber}`,
-            type: 'expense',
-            amount: purchase.totalAmount,
-            description: 'Purchase transaction',
+            businessId: purchase.businessId ?? '',
+           // item: `Purchase #${purchase.purchaseNumber}`,
+            transactionType: 'expense',
+            totalAmount: purchase.totalAmount,
+            //description: 'Purchase transaction',
+            createdBy: purchase.createdBy ?? '',
+            approvedBy: purchase.createdBy ?? '',
             transactionDate: purchase.purchaseDate,
-            reference: purchase.id,
+            entityId: purchase.id,
             transactionStatus: 'completed',
             created_at: new Date(),
             updated_at: new Date(),
@@ -259,6 +238,8 @@ export const purchaseQueries = {
             created_at: new Date(),
             updated_at: new Date(),
           }).returning();
+
+
           // Insert ledger entries (double-entry)
           // Debit: Inventory (1200) or Expense (6000), Credit: Cash (1000) or Accounts Payable (2000)
           await tx.insert(ledgerEntries).values([
@@ -443,7 +424,7 @@ export const purchaseQueries = {
   // Get purchases by vendor
   async getByVendorId(
     vendorId: string,
-    paginationData: z.infer<typeof paginationSchema> = { page: 1, limit: 10 }
+    paginationData: z.infer<typeof paginationSchema> = { page: 1, limit: 10, offset:0}
   ): Promise<{ purchases: PurchaseWithDetails[]; total: number }> {
     try {
       const validatedVendorId = uuidSchema.parse(vendorId);
@@ -510,7 +491,7 @@ export const purchaseQueries = {
         .select({
           product: products,
           totalQuantity: sql<number>`SUM(${purchaseItems.quantity})`,
-          totalAmount: sql<number>`SUM(${purchaseItems.totalPrice})`,
+          totalAmount: sql<number>`SUM(${purchaseItems.totalCost})`
         })
         .from(purchaseItems)
         .innerJoin(purchases, eq(purchaseItems.purchaseId, purchases.id))

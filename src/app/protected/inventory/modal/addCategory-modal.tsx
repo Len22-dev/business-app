@@ -102,17 +102,6 @@ export function AddCategoryModal({ open, onOpenChange, businessId }: AddCategory
         <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4" noValidate>
           <div className="space-y-2">
-            <TextField
-              control={form.control}
-              name="name"
-              label="Category Name"
-              placeholder="Enter category name"
-              disabled={isPending}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
             <SelectField
               control={form.control}
               name="type"
@@ -123,6 +112,17 @@ export function AddCategoryModal({ open, onOpenChange, businessId }: AddCategory
                 { value: "expense", label: "Expense" },
                 { value: "income", label: "Income" },
               ]}
+              disabled={isPending}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <TextField
+              control={form.control}
+              name="name"
+              label="Category Name"
+              placeholder="Enter category name"
               disabled={isPending}
               required
             />

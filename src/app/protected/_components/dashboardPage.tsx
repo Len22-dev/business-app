@@ -21,13 +21,14 @@ import {
   MoreHorizontal,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { AddTransactionModal } from "./transaction-modal/addtransaction-modal"
+//import { AddTransactionModal } from "./transaction-modal/addtransaction-modal"
 import { ViewTransactionModal } from "./transaction-modal/viewTransaction-modal"
 import { EditTransactionModal } from "./transaction-modal/editTransaction-modal"
 import { useDashboardStats } from "@/hooks/useBusinesses"
 import { useBusinessTransactions } from "@/hooks/useTransaction"
 import { Skeleton } from "@/components/ui/skeleton"
 import { FullTransactionWithItems} from "@/lib/zod/transactionSchema"
+import { SalesExpensesForm } from "./transaction-modal/transaction-modal"
 
 
 interface DashboardClientProps {
@@ -246,7 +247,7 @@ export function DashboardContent({  businessId, userId  }: DashboardClientProps)
             </CardContent>
           </Card>
         </div>
-
+            <SalesExpensesForm/>
         {/* Recent Transactions */}
         <Card>
           <CardHeader>
@@ -402,7 +403,8 @@ export function DashboardContent({  businessId, userId  }: DashboardClientProps)
       </div>
 
       {/* Modals */}
-      <AddTransactionModal  open={isAddModalOpen} onOpenChange={setIsAddModalOpen}  businessId={businessId!} userId={userId} />
+      {/* <AddTransactionModal  open={isAddModalOpen} onOpenChange={setIsAddModalOpen}  businessId={businessId!} userId={userId} /> */}
+      
       
 
      {selectedTransaction && (
